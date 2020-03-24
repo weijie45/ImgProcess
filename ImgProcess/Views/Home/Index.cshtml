@@ -1,0 +1,350 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<style>
+    .img-preview {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+
+    .img-thb {
+        max-width: 150px;
+        max-height: 150px;
+        padding: 2px;
+        vertical-align: middle;
+        border: 3px solid #FF9800;
+        box-shadow: 0px 0px 5px #FF9800;
+        border-radius: 5px;
+        transition: ease-in;
+    }
+
+    div.box {
+        margin: 8px;
+        position: relative;
+    }
+
+
+    .info {
+        z-index: 2;
+        background-color: rgba(0,0,0,.3);
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        width: 100%;
+        opacity: 0;
+        transition: .5s ease;
+        /*background-color: #008CBA;*/
+    }
+
+        .info p {
+            margin: 0;
+            color: white;
+            font-size: 1.25rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-weight: bolder;
+        }
+
+            .info p:after {
+                content: ' \002B';
+            }
+
+        .info:hover {
+            -webkit-transition: 500ms;
+            opacity: 1;
+        }
+
+    img.max {
+        width: 100%;
+        height: auto;
+    }
+</style>
+
+<div class="wj-dropBlock">
+    <div class="drop-area hidden">
+        <i class="fa fa-cloud-upload fa-5x"></i>
+        <p>Drag & Drop Photos Here</p>
+    </div>
+    <input type="file" name="file-1[]" id="imgUpload" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
+    <label for="imgUpload"><span id="imgUpload-span">Or Click Here &hellip;</span></label>
+</div>
+
+<div class="img-preview" id='preview'></div>
+
+
+@section Scripts {
+
+    <script>
+
+        var _Counter = 1, _Total, _Start, _Files;
+
+        //  屏蔽
+        $.wait = function (msg) {
+            $("body").addClass("loading");
+            if (!msg) { msg = "資料查詢中..."; }
+            $('#loading-msg').text(msg);
+        };
+
+        $.close = function () {
+            $("body").removeClass("loading");
+        };
+
+        // Formt File
+        function FormatFile(file) {
+            var modifyDate = new Date(typeof (file.lastModified) == 'undefined' ? new Date() : file.lastModified);
+            modifyDate = modifyDate.toISOString().substring(0, 10) + " " + modifyDate.toTimeString().substring(0, 8);
+
+            var obj = {
+                File: file,
+                Name: file.name.replace(/\.[^/.]+$/, ""),
+                Ext: file.name.split('.').pop().toLowerCase(),
+                ModifyDate: modifyDate,
+                Size: file.size
+            };
+
+            return obj;
+
+        }
+
+        function incrementCounter() {
+            _Counter++;
+            if (_Counter === _Total) {
+                console.log('All Image loaded');
+                console.log(fancyTimeFormat((new Date().getTime() - _Start.getTime()) / 1000));
+            }
+        }
+        $(document).on('click', '.info', function () {
+            var $img = $(this).siblings('.img-thb');
+            $('.PreviewImgModal').addClass('show');
+            $('.PreviewImgModal img').attr('src', $img.attr('src'));
+        });
+
+        $('.PreviewImgModal').on('click', function () {
+            $(this).removeClass('show');
+        });
+
+        // base64 to blob
+        function base64toBlob(dataURI) {
+
+            var byteString = atob(dataURI.split(',')[1]);
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: 'image/jpeg' });
+        }
+
+        function UpdateProgress(id, errMsg, percent) {
+
+            $('#' + id).html(percent + "%");
+
+        }
+
+
+        function Upload(cnt) {
+            var fd = new FormData();
+            fd.append('file', _Files[cnt]);
+
+            var progressNotifier = $.connection.progressHub;
+            progressNotifier.client.sendMessage = function (selector, errMsg, percent) {
+                UpdateProgress(selector, errMsg, percent);
+            };
+
+            $.connection.hub.start().done(function () {
+                fd.append('Selector', 'p_' + cnt);
+                fd.append("ConnId", $.connection.hub.id);
+
+                $.ajax({
+                    url: '/Home/GetPhotoInfo',
+                    type: 'POST',
+                    data: fd,
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false,  // tell jQuery not to set contentType
+                    success: function (data) {
+
+                        console.log(data);
+                        $('#img_' + cnt).addClass('fade-in').show();
+                        $('#img_loading_' + cnt).hide();
+
+                    }, error: function (response) {
+                        if (response.status == 200) {
+                            layer.alert('200');
+                        } else {
+                            if (response.statusText != 'abort') {
+                                layer.alert(decodeURIComponent(response.statusText), { icon: 7 });
+                            }
+                        }
+                        $.closeAll();
+                    },
+                    xhr: function () {
+                        var xhr = $.ajaxSettings.xhr();
+                        xhr.upload.onprogress = function (e) {
+                            var pourc = (e.loaded / e.total * 100);
+                            if (pourc < 100) {
+                                pourc = pourc <= 0 ? pourc += 3 : pourc;
+                                UpdateProgress('p_' + cnt, "", pourc);
+                            }
+                        };
+                        return xhr;
+                    }
+                });
+
+            });
+        }
+
+        // 每張圖預覽
+        function PreviewInfo(src, cnt) {
+            var box = document.createElement('div');
+            box.setAttribute('class', 'box');
+
+            var info = document.createElement('div');
+            info.setAttribute('class', 'info');
+
+            // 進度
+            var txt = document.createElement('p');
+            //txt.setAttribute('id', 'p_' + cnt);
+            txt.innerText = '';
+
+            info.appendChild(txt);
+
+            // 縮圖
+            var img = document.createElement('img');
+            img.setAttribute('src', src);
+            img.setAttribute('id', 'img_' + cnt);
+            img.setAttribute('class', 'img-thb');
+            img.style.display = "none";
+            img.onload = function () {
+                incrementCounter();
+            }
+
+            // Loading 圖片
+            var loadingImg = document.createElement('img');
+            loadingImg.setAttribute('src', '../Image/Ripple.gif');
+            loadingImg.setAttribute('id', 'img_loading_' + cnt);
+            loadingImg.style.position = "relative";
+            loadingImg.style.zIndex = '3';
+            loadingImg.width = '100';
+
+            box.appendChild(loadingImg);
+            box.appendChild(img);
+            box.append(info);
+            $("#preview").append(box);
+
+            Upload(cnt);
+        }
+
+        // 產生縮圖及檢查格式
+        function VerifyImg(files) {
+            _Counter = 1;
+            _Total = files.length;
+            _Start = new Date();
+            _Files = files;
+            for (var i = 0; i < files.length; i++) {
+                var file = FormatFile(files[i]);
+                var formData = new FormData();
+                formData.append('file', file.File);
+
+                var T = new Date();
+
+                if (file.Ext == "heic") {
+                    (function (formData, i) {
+                        $.ajax({
+                            url: '/Home/FormatPhoto',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,  // tell jQuery not to process the data
+                            contentType: false,  // tell jQuery not to set contentType
+                            success: function (data) {
+                                PreviewInfo(data[1], i);
+                            }
+                        });
+                    })(formData, i);
+
+                } else {
+                    (function (file, i) {
+                        var reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = function (e) {
+                            PreviewInfo(e.target.result, i);
+                        }
+                    })(file.File, i);
+                }
+
+                if (i == files.length - 1) console.log(fancyTimeFormat((new Date().getTime() - _Start.getTime()) / 1000));
+            }
+        }
+
+        // 秒數 format
+        function fancyTimeFormat(time) {
+            // Hours, minutes and seconds
+            var hrs = ~~(time / 3600);
+            var mins = ~~((time % 3600) / 60);
+            var secs = ~~time % 60;
+
+            // Output like "1:01" or "4:03:59" or "123:03:59"
+            var ret = "";
+
+            if (hrs > 0) {
+                ret += "" + hrs + "時 " + (mins < 10 ? "0" : "");
+            }
+
+            ret += "" + mins + "分 ";
+            ret += "" + secs + "秒";
+            return ret;
+        }
+
+
+        // Input圖片上傳
+        $('#imgUpload').on('change', function (e) {
+            if (e.target.files.length > 0) {
+                VerifyImg(e.target.files);
+            }
+        });
+
+        $(function () {
+            // 拖拉區塊
+            //http://www.tipocode.com/html/drag-and-drop-multiple-files-upload-with-html5-jquery-formdata/#
+            $('.wj-dropBlock').on('dragover', function (e) {
+                $(this).attr('class', 'drop_hover');
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            // Add eventhandlers for dragenter and prevent the default actions for this event
+            $('.wj-dropBlock').on('dragenter', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            $('.wj-dropBlock').on('dragleave', function (e) {
+                $(this).attr('class', 'wj-dropBlock');
+            });
+
+            $('.wj-dropBlock').on('drop', function (e) {
+                if (e.originalEvent.dataTransfer) {
+                    if (e.originalEvent.dataTransfer.files.length) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        VerifyImg(e.originalEvent.dataTransfer.files);
+                    }
+                }
+            });
+
+        });
+    </script>
+
+}

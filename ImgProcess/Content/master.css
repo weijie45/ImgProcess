@@ -1,0 +1,104 @@
+﻿
+.fade-in {
+    opacity: 1;
+    animation-name: fadeInOpacity;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: 0.75s;
+}
+
+@keyframes fadeInOpacity {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.wj-dropBlock {
+    border: 4px dotted #444;
+    color: #444;
+    text-align: center;
+    margin: 0 auto;
+    font-size: 20px;
+    border: 4px dotted #444;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+    .wj-dropBlock p {
+        padding: 20px 0;
+    }
+
+.drop_hover {
+    border: 4px dotted #4d90fe;
+    background-color: #e7f0ff;
+    color: #4d90fe;
+    font-size: 20px;
+    text-align: center;
+    padding: 20px 0;
+    margin: 0 auto;
+}
+
+    .drop_hover p {
+        padding: 20px 0;
+    }
+
+
+/*上傳檔案*/
+.inputfile {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+}
+
+    .inputfile + label {
+        max-width: 80%;
+        font-size: 1.25rem;
+        /* 20px */
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        display: inline-block;
+        overflow: hidden;
+        padding: 0.625rem 1.25rem;
+        /* 10px 20px */
+    }
+
+    .inputfile:focus + label,
+    .inputfile.has-focus + label {
+        outline: 1px dotted #000;
+        outline: -webkit-focus-ring-color auto 5px;
+    }
+
+    .inputfile + label svg {
+        width: 1em;
+        height: 1em;
+        vertical-align: middle;
+        fill: currentColor;
+        margin-top: -0.25em;
+        /* 4px */
+        margin-right: 0.25em;
+        /* 4px */
+    }
+
+.inputfile-1 + label {
+    color: #f1e5e6;
+    background-color: #d3394c;
+    border-radius: 5px;
+}
+
+    .inputfile-1:focus + label,
+    .inputfile-1.has-focus + label,
+    .inputfile-1 + label:hover {
+        background-color: #722040;
+    }

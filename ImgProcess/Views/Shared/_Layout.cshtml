@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <style>
+
+        .PreviewImgModal {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            z-index: 5;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+            .PreviewImgModal img {
+                max-height: 90%;
+                max-width: 90%;
+                border-radius: 3px;
+                border: 4px solid #fff;
+            }
+
+            .PreviewImgModal.show {
+                display: flex;
+            }
+
+        .loading-modal {
+            display: none;
+            position: fixed;
+            z-index: 5;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(238, 238, 238, 0.79);
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+            .loading-modal div {
+                border: 1px solid black;
+                padding: 10px;
+                background-color: white;
+                font-size: 20px;
+            }
+
+                .loading-modal div img,
+                .loading-modal div span {
+                    vertical-align: middle;
+                }
+
+        body.loading {
+            overflow: hidden;
+        }
+
+            body.loading .loading-modal {
+                display: flex;
+            }
+    </style>
+</head>
+<body>
+
+    <div>
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year </p>
+        </footer>
+    </div>
+
+    <div class="PreviewImgModal">
+        <img src="" />
+    </div>
+    <div class="loading-modal">
+        <div>
+            <img src="..\Image\Loading.gif" style="vertical-align:middle;">
+            <span id="loading-msg"></span>
+        </div>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+
+    <script type="text/javascript" src="~/Scripts/layer/layer.js"></script>
+    <script type="text/javascript" src="~/Scripts/jquery.signalR-2.4.1.min.js"></script>
+    <script type="text/javascript" src="~/signalr/hubs"></script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>
