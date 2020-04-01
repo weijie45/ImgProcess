@@ -91,9 +91,7 @@ namespace ImgProcess.Infrastructure
                 var errorMsg = new ContentResult();
                 errorMsg.Content = "無效的網站識別碼 !";
                 filterContext.Result = errorMsg;
-            } else {
-
-              
+            } else {            
 
                 _logContext.LogRepoistory.SysLog(ex);
 

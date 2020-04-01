@@ -12,6 +12,6 @@ namespace Log
 
         void AddLog(string msg, string content);
 
-        List<Log> FindAllByLogDate(string logDate);
+        List<Log> FindAllByLogDate(string startDate, string endDate);
     }
 }

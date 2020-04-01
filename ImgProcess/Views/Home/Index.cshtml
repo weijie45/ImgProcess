@@ -81,6 +81,7 @@
 </style>
 
 <p><a href="@Url.Action("FindLog","Home")">Query Log List</a></p>
+<p><a href="@Url.Action("Photo","Home")">Photo</a></p>
 
 <form id="upload-form">
     <div class="wj-dropBlock">
@@ -162,34 +163,7 @@
                 console.log('All Image loaded');
             }
         }
-
-        // 大圖
-        $(document).on('click', '.info', function () {
-            $('.PreviewImgModal').addClass('show');
-
-            var $newimg = document.createElement('img');
-            $newimg.style.opacity = "0";
-            $newimg.onload = function () {
-                $('.PreviewImgModal .loaded').addClass('fade-out');
-                this.classList.add('fade-in', 'border');
-                this.style.opacity = "1";
-
-            };
-            $newimg.setAttribute('src', $(this).siblings('.img-thb').attr('src'));
-
-            $('.PreviewImgModal .bottom p').text($(this).siblings('.img-thb').attr('data-title'));
-            $('.PreviewImgModal').append($newimg);
-
-            wheelzoom(document.querySelector('.PreviewImgModal >  img:not(.loaded)'));
-        });
-
-        // 關閉大圖
-        $('.PreviewImgModal .close').on('click', function () {
-            $('.PreviewImgModal').removeClass('show');
-            $('.PreviewImgModal img:not(.loaded)').remove();
-            $('.PreviewImgModal .loaded').removeClass('fade-out').show();
-        });
-
+       
         // 進度條
         function UpdateProgress(selector, errMsg, percent, counter, src) {
             if (parseInt(percent) >= 100) {
@@ -203,7 +177,8 @@
                 $('#ErrList').append(errMsg + "<br>");
             } else {
                 var $img = $('#img_' + counter);
-                $img.attr('src', src).addClass('border').addClass('fade-in').show();
+                $img.attr('src', src).attr('data-org-src', src).addClass('border').addClass('fade-in');
+                $img.parent('div.box').show();
             }
 
         }
@@ -275,7 +250,7 @@
         }
 
         // 每張圖預覽
-        function PreviewInfo(src, fileCnt) {
+        function PreviewInfo(loadingSrc, fileCnt) {
             var file = FormatFile(_Files[fileCnt]);
 
             var box = document.createElement('div');
@@ -293,15 +268,15 @@
 
             // 縮圖
             var img = document.createElement('img');
-            img.setAttribute('src', '../Image/Double-ball.gif');
-            img.setAttribute('data-src', src);
+            img.setAttribute('src', loadingSrc);
             img.setAttribute('id', 'img_' + fileCnt);
             img.classList.add('img-thb', 'fade-in');
             img.setAttribute('data-title', file.Name);
-            console.log('>>', _Total, _Total - _LoadingCnt, fileCnt);
-            if (_Total - _LoadingCnt > fileCnt || (fileCnt <= 1 || _Total == 0)) {
-                console.log('none> ', (_Total - _LoadingCnt > fileCnt || fileCnt >= 1), _Total, _Total - _LoadingCnt, fileCnt);
-                img.style.display = "none";
+            
+            if ((_Total - _LoadingCnt > fileCnt)) {
+                // 後3張不隱藏
+                box.style.display = "none";
+                //img.style.display = "none";
             }
 
             img.onload = function () {
@@ -329,7 +304,7 @@
                 var file = FormatFile(files[i]);
 
                 if (_Way == "S") {
-                    PreviewInfo('../Image/RollingLoading.gif', i);
+                    PreviewInfo('../Image/Double-ball.gif', i);
                 } else {
                     if (file.Ext == "heic") {
 

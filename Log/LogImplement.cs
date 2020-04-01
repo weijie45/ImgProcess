@@ -53,10 +53,10 @@ namespace Log
             }
         }
 
-        public List<Log> FindAllByLogDate(string logDate)
+        public List<Log> FindAllByLogDate(string startDate, string endDate)
         {
             using (var db = new SqlConnection(_connectionString)) {
-                return db.Query<Log>($"Select * From ErrorLog  Where Convert(varchar(10),LogDate,112) = '{logDate}' ").ToList();
+                return db.Query<Log>($"Select * From ErrorLog  Where Convert(varchar(10),LogDate,112) Between '{startDate}' AND '{endDate}' ").ToList();
             }
         }
 
