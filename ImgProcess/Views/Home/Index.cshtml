@@ -6,20 +6,29 @@
     .img-preview {
         display: flex;
         flex-wrap: wrap;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
     }
+
+        .img-preview::after {
+            content: "";
+            flex: auto;
+        }
 
     .img-thb {
         max-width: 150px;
         max-height: 150px;
         padding: 2px;
         vertical-align: middle;
-        border: 3px solid #FF9800;
-        box-shadow: 0px 0px 5px #FF9800;
-        border-radius: 5px;
         transition: ease-in;
+        position: relative;
     }
+
+        .img-thb.border {
+            border: 3px solid #FF9800;
+            box-shadow: 0px 0px 5px #FF9800;
+            border-radius: 5px;
+        }
 
     div.box {
         margin: 8px;
@@ -28,7 +37,7 @@
 
 
     .info {
-        z-index: 2;
+        z-index: 1;
         background-color: rgba(0,0,0,.3);
         position: absolute;
         top: 0;
@@ -71,23 +80,35 @@
     }
 </style>
 
-<div class="wj-dropBlock">
-    <div class="drop-area hidden">
-        <i class="fa fa-cloud-upload fa-5x"></i>
-        <p>Drag & Drop Photos Here</p>
+<p><a href="@Url.Action("FindLog","Home")">Query Log List</a></p>
+
+<form id="upload-form">
+    <div class="wj-dropBlock">
+        <div class="drop-area">
+            <i class="fa fa-cloud-upload fa-5x"></i>
+            <p>Drag & Drop Photos Here</p>
+        </div>
+        <input type="file" name="file-1[]" id="imgUpload" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
+        <label for="imgUpload"><span id="imgUpload-span">Or Click Here &hellip;</span></label>
     </div>
-    <input type="file" name="file-1[]" id="imgUpload" class="inputfile inputfile-1" data-multiple-caption="{count} files selected" multiple />
-    <label for="imgUpload"><span id="imgUpload-span">Or Click Here &hellip;</span></label>
+</form>
+
+<div id="loading-part" class="hidden" style="width:100%;text-align:center;">
+    <div class="progressbar"><div></div></div>
+    <p id="result"></p>
+    <p id="timeResult" class="hidden"></p>
 </div>
 
 <div class="img-preview" id='preview'></div>
+
+<div id="ErrList"></div>
 
 
 @section Scripts {
 
     <script>
-
-        var _Counter = 1, _Total, _Start, _Files;
+        var _LoadingCnt = 3, _Counter, _Total, _Start, _Files, _Way = "S";
+        var parser = new UAParser().getResult();
 
         //  屏蔽
         $.wait = function (msg) {
@@ -100,71 +121,120 @@
             $("body").removeClass("loading");
         };
 
-        // Formt File
-        function FormatFile(file) {
-            var modifyDate = new Date(typeof (file.lastModified) == 'undefined' ? new Date() : file.lastModified);
-            modifyDate = modifyDate.toISOString().substring(0, 10) + " " + modifyDate.toTimeString().substring(0, 8);
-
-            var obj = {
-                File: file,
-                Name: file.name.replace(/\.[^/.]+$/, ""),
-                Ext: file.name.split('.').pop().toLowerCase(),
-                ModifyDate: modifyDate,
-                Size: file.size
-            };
-
-            return obj;
-
+        // Gallery 關閉
+        function CloseVbox() {
+            $('.vbox-close').trigger('click');
         }
 
-        function incrementCounter() {
+        function IsEmpty(val) {
+            return (!val || val == "");
+        }
+
+        // Formt File
+        function FormatFile(file) {
+            var obj = {
+                File: "",
+                Name: "",
+                Ext: "",
+                ModifyDate: "",
+                Size: ""
+            };
+
+            if (typeof (file) != "undefined") {
+                var modifyDate = new Date(typeof (file.lastModified) == 'undefined' ? new Date() : file.lastModified);
+                modifyDate = modifyDate.toISOString().substring(0, 10) + " " + modifyDate.toTimeString().substring(0, 8);
+
+                obj.File = file;
+                obj.Name = file.name.replace(/\.[^/.]+$/, "");
+                obj.Ext = file.name.split('.').pop().toLowerCase();
+                obj.ModifyDate = modifyDate;
+                obj.Size = file.size;
+
+            }
+
+            return obj;
+        }
+
+        // 圖片是否已載入
+        function ImgLoadDone() {
             _Counter++;
             if (_Counter === _Total) {
                 console.log('All Image loaded');
-                console.log(fancyTimeFormat((new Date().getTime() - _Start.getTime()) / 1000));
             }
         }
+
+        // 大圖
         $(document).on('click', '.info', function () {
-            var $img = $(this).siblings('.img-thb');
             $('.PreviewImgModal').addClass('show');
-            $('.PreviewImgModal img').attr('src', $img.attr('src'));
+
+            var $newimg = document.createElement('img');
+            $newimg.style.opacity = "0";
+            $newimg.onload = function () {
+                $('.PreviewImgModal .loaded').addClass('fade-out');
+                this.classList.add('fade-in', 'border');
+                this.style.opacity = "1";
+
+            };
+            $newimg.setAttribute('src', $(this).siblings('.img-thb').attr('src'));
+
+            $('.PreviewImgModal .bottom p').text($(this).siblings('.img-thb').attr('data-title'));
+            $('.PreviewImgModal').append($newimg);
+
+            wheelzoom(document.querySelector('.PreviewImgModal >  img:not(.loaded)'));
         });
 
-        $('.PreviewImgModal').on('click', function () {
-            $(this).removeClass('show');
+        // 關閉大圖
+        $('.PreviewImgModal .close').on('click', function () {
+            $('.PreviewImgModal').removeClass('show');
+            $('.PreviewImgModal img:not(.loaded)').remove();
+            $('.PreviewImgModal .loaded').removeClass('fade-out').show();
         });
 
-        // base64 to blob
-        function base64toBlob(dataURI) {
-
-            var byteString = atob(dataURI.split(',')[1]);
-            var ab = new ArrayBuffer(byteString.length);
-            var ia = new Uint8Array(ab);
-
-            for (var i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
+        // 進度條
+        function UpdateProgress(selector, errMsg, percent, counter, src) {
+            if (parseInt(percent) >= 100) {
+                percent = 100;
             }
-            return new Blob([ab], { type: 'image/jpeg' });
+
+            var complete = parseInt(percent).toFixed();
+            $(selector).css('width', complete + "%").text(complete + "%");
+
+            if (!IsEmpty(errMsg)) {
+                $('#ErrList').append(errMsg + "<br>");
+            } else {
+                var $img = $('#img_' + counter);
+                $img.attr('src', src).addClass('border').addClass('fade-in').show();
+            }
+
         }
 
-        function UpdateProgress(id, errMsg, percent) {
-
-            $('#' + id).html(percent + "%");
-
-        }
-
-
-        function Upload(cnt) {
+        //上傳
+        function Upload(files, cnt) {
+            var uaParser = {
+                BrowserName: parser.browser.name,
+                BrowserVersion: parser.browser.version,
+                EngineName: parser.engine.name,
+                EngineVersion: parser.engine.version,
+                OsName: parser.os.name,
+                OsVersion: parser.os.version,
+                DeviceType: parser.device.type,
+                DeviceVendor: parser.device.vendor
+            }
             var fd = new FormData();
-            fd.append('file', _Files[cnt]);
+
+            for (var i = 0; i < files.length; i++) {
+                fd.append('file', files[i]);
+            }
+
+            fd.append('UAParser', JSON.stringify(uaParser));
 
             var progressNotifier = $.connection.progressHub;
-            progressNotifier.client.sendMessage = function (selector, errMsg, percent) {
-                UpdateProgress(selector, errMsg, percent);
+            progressNotifier.client.sendMessage = function (selector, errMsg, percent, counter, src) {
+                UpdateProgress(selector, errMsg, percent, counter, src);
             };
 
             $.connection.hub.start().done(function () {
-                fd.append('Selector', 'p_' + cnt);
+                fd.append('Selector', '.progressbar > div');
                 fd.append("ConnId", $.connection.hub.id);
 
                 $.ajax({
@@ -174,31 +244,30 @@
                     processData: false,  // tell jQuery not to process the data
                     contentType: false,  // tell jQuery not to set contentType
                     success: function (data) {
+                        $('#timeResult').append('耗時: ' + fancyTimeFormat((new Date().getTime() - _Start.getTime()) / 1000)).show();
 
-                        console.log(data);
-                        $('#img_' + cnt).addClass('fade-in').show();
-                        $('#img_loading_' + cnt).hide();
+                        var $form = document.getElementById('upload-form');
+                        $form.reset();
+                        $form.style.display = "";
+
+                        if (data[0] != '') {
+                            // Error
+                            $('#p_' + cnt).html(data[0]).parent().css('opacity', '1');
+                        } else {
+                            var $img = $('#img_' + cnt);
+                            $img.attr('src', data[1]).addClass('border').addClass('fade-in');
+                        }
 
                     }, error: function (response) {
                         if (response.status == 200) {
                             layer.alert('200');
                         } else {
+                            console.log(response.responseText);
                             if (response.statusText != 'abort') {
                                 layer.alert(decodeURIComponent(response.statusText), { icon: 7 });
                             }
                         }
-                        $.closeAll();
-                    },
-                    xhr: function () {
-                        var xhr = $.ajaxSettings.xhr();
-                        xhr.upload.onprogress = function (e) {
-                            var pourc = (e.loaded / e.total * 100);
-                            if (pourc < 100) {
-                                pourc = pourc <= 0 ? pourc += 3 : pourc;
-                                UpdateProgress('p_' + cnt, "", pourc);
-                            }
-                        };
-                        return xhr;
+                        $.close();
                     }
                 });
 
@@ -206,7 +275,9 @@
         }
 
         // 每張圖預覽
-        function PreviewInfo(src, cnt) {
+        function PreviewInfo(src, fileCnt) {
+            var file = FormatFile(_Files[fileCnt]);
+
             var box = document.createElement('div');
             box.setAttribute('class', 'box');
 
@@ -215,76 +286,159 @@
 
             // 進度
             var txt = document.createElement('p');
-            //txt.setAttribute('id', 'p_' + cnt);
+            txt.setAttribute('id', 'p_' + fileCnt);
             txt.innerText = '';
 
             info.appendChild(txt);
 
             // 縮圖
             var img = document.createElement('img');
-            img.setAttribute('src', src);
-            img.setAttribute('id', 'img_' + cnt);
-            img.setAttribute('class', 'img-thb');
-            img.style.display = "none";
-            img.onload = function () {
-                incrementCounter();
+            img.setAttribute('src', '../Image/Double-ball.gif');
+            img.setAttribute('data-src', src);
+            img.setAttribute('id', 'img_' + fileCnt);
+            img.classList.add('img-thb', 'fade-in');
+            img.setAttribute('data-title', file.Name);
+            console.log('>>', _Total, _Total - _LoadingCnt, fileCnt);
+            if (_Total - _LoadingCnt > fileCnt || (fileCnt <= 1 || _Total == 0)) {
+                console.log('none> ', (_Total - _LoadingCnt > fileCnt || fileCnt >= 1), _Total, _Total - _LoadingCnt, fileCnt);
+                img.style.display = "none";
             }
 
-            // Loading 圖片
-            var loadingImg = document.createElement('img');
-            loadingImg.setAttribute('src', '../Image/Ripple.gif');
-            loadingImg.setAttribute('id', 'img_loading_' + cnt);
-            loadingImg.style.position = "relative";
-            loadingImg.style.zIndex = '3';
-            loadingImg.width = '100';
+            img.onload = function () {
+                ImgLoadDone();
+            }
 
-            box.appendChild(loadingImg);
             box.appendChild(img);
-            box.append(info);
-            $("#preview").append(box);
+            box.appendChild(info);
 
-            Upload(cnt);
+            $("#preview").append(box);
         }
 
-        // 產生縮圖及檢查格式
+        // 檢查格式
         function VerifyImg(files) {
-            _Counter = 1;
+            Init();
+            _Counter = 0;
             _Total = files.length;
             _Start = new Date();
             _Files = files;
+
+            Upload(files);
+            $('#loading-part').show();
+
             for (var i = 0; i < files.length; i++) {
                 var file = FormatFile(files[i]);
-                var formData = new FormData();
-                formData.append('file', file.File);
 
-                var T = new Date();
-
-                if (file.Ext == "heic") {
-                    (function (formData, i) {
-                        $.ajax({
-                            url: '/Home/FormatPhoto',
-                            type: 'POST',
-                            data: formData,
-                            processData: false,  // tell jQuery not to process the data
-                            contentType: false,  // tell jQuery not to set contentType
-                            success: function (data) {
-                                PreviewInfo(data[1], i);
-                            }
-                        });
-                    })(formData, i);
-
+                if (_Way == "S") {
+                    PreviewInfo('../Image/RollingLoading.gif', i);
                 } else {
-                    (function (file, i) {
-                        var reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = function (e) {
-                            PreviewInfo(e.target.result, i);
-                        }
-                    })(file.File, i);
-                }
+                    if (file.Ext == "heic") {
 
-                if (i == files.length - 1) console.log(fancyTimeFormat((new Date().getTime() - _Start.getTime()) / 1000));
+                        (function (file, i) {
+                            var fd = new FormData();
+                            fd.append('file', file);
+
+                            $.ajax({
+                                url: '/Home/FormatPhoto',
+                                type: 'POST',
+                                data: fd,
+                                processData: false,  // tell jQuery not to process the data
+                                contentType: false,  // tell jQuery not to set contentType
+                                success: function (data) {
+                                    PreviewInfo(data[1], i);
+                                }
+                            });
+                        })(file.File, i);
+
+                    } else {
+
+                        (function (file, i) {
+                            ResizeRotateImg(file, i)
+                        })(file.File, i);
+                    }
+                }
             }
+
+        }
+
+        // 非HEIC圖片方向修正
+        function ResizeRotateImg(file, i) {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function (e) {
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext("2d");
+                var img = new Image();
+                img.onload = function () {
+                    //設定長邊上限值
+                    var max_Length = 1920;
+
+                    var imgWidth = img.width;
+                    var imgHeight = img.height;
+
+                    if (imgWidth > imgHeight) {
+                        if (imgWidth > max_Length) {
+                            imgHeight = Math.round(imgHeight *= max_Length / imgWidth);
+                            imgWidth = max_Length;
+                        }
+                    } else {
+                        if (imgHeight > max_Length) {
+                            imgWidth = Math.round(imgWidth *= max_Length / imgHeight);
+                            imgHeight = max_Length;
+                        }
+                    }
+
+                    canvas.width = imgWidth;
+                    canvas.height = imgHeight;
+
+                    var that = this;
+                    EXIF.getData(img, function () {
+                        var orientation = EXIF.getTag(that, 'Orientation');
+
+                        if (orientation == 6 || orientation == 8 || orientation == 3) {
+                            var rotateAngle = 0;
+
+                            switch (orientation) {
+                                case 3:
+                                    rotateAngle = 180;
+                                    break;
+                                case 6:
+                                    rotateAngle = 90;
+                                    canvas.width = imgHeight;
+                                    canvas.height = imgWidth;
+                                    break;
+                                case 8:
+                                    rotateAngle = -90;
+                                    canvas.width = imgHeight;
+                                    canvas.height = imgWidth;
+                                    break;
+                            }
+
+                            var x = canvas.width / 2;
+                            var y = canvas.height / 2;
+
+                            ctx.translate(x, y);
+                            ctx.rotate(rotateAngle * Math.PI / 180);
+
+                            ctx.drawImage(img, (-imgWidth / 2), (-imgHeight / 2), imgWidth, imgHeight);
+                        }
+                        else {
+                            ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+                        }
+                    });
+                    PreviewInfo(canvas.toDataURL("image/jpeg", 1.0), i);
+                };
+
+                img.src = e.target.result;
+            };
+        }
+
+        function Init() {
+            _Files = [];
+            _Counter = 0;
+            _Total = 0;
+
+            $('#ErrList,#timeResult,#preview').empty();
+            $('#upload-form').hide();
         }
 
         // 秒數 format
@@ -305,7 +459,6 @@
             ret += "" + secs + "秒";
             return ret;
         }
-
 
         // Input圖片上傳
         $('#imgUpload').on('change', function (e) {
@@ -345,6 +498,19 @@
             });
 
         });
+
+        // base64 to blob
+        function base64toBlob(dataURI) {
+
+            var byteString = atob(dataURI.split(',')[1]);
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: 'image/jpeg' });
+        }
     </script>
 
 }

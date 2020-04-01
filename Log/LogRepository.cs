@@ -10,7 +10,8 @@ namespace Log
     {
         void SysLog(Exception e);
 
-        void AddLog(string msg, string Content);
+        void AddLog(string msg, string content);
 
+        List<Log> FindAllByLogDate(string logDate);
     }
 }

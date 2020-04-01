@@ -9,7 +9,13 @@ namespace ImgProcess
         public static void RegisterBundles(BundleCollection bundles)
         {
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
-                        "~/Scripts/jquery-{version}.js"));
+                        "~/Scripts/jquery-{version}.js",
+                        "~/Scripts/exif.js",
+                        "~/Scripts/wheelzoom.js",
+                        "~/Scripts/venobox.js",
+                        "~/Scripts/ua-parser.js",
+                        "~/Scripts/screenfull.min.js",
+                        "~/Scripts/jquery.lazy.min.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
@@ -20,7 +26,8 @@ namespace ImgProcess
                         "~/Scripts/modernizr-*"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(                      
-                      "~/Content/master.css"));
+                      "~/Content/master.css",
+                      "~/Content/venobox.css"));
         }
     }
 }

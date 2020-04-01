@@ -21,6 +21,7 @@ namespace Service.Function.Base
             };
         }
 
+
         public override void ExecuteResult(ControllerContext context)
         {
             if (context == null) {
@@ -40,6 +41,15 @@ namespace Service.Function.Base
         public JsonSerializerSettings SerializerSettings { get; set; }
     }
 
+    [Serializable]
+    public class JsonResponseModel
+    {
+        public object Data { get; set; }
+
+        public List<string> Errors { get; set; }
+
+        public string Status { get; set; }
+    }
 
     public static class ControllerExtensions
     {

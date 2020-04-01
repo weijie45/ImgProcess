@@ -1,7 +1,11 @@
-﻿using DapperExtensions;
+﻿using Dapper;
+using DapperExtensions;
 using Service.Function.Common;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Transactions;
 using static Log.LogContext;
 
 namespace Log
@@ -23,30 +27,38 @@ namespace Log
 
         public  void SysLog(Exception e)
         {
-            using(var db = new SqlConnection(_connectionString)) {
-                db.Open();
-                var l = new Log();
-                l.Message = e.Message;
-                l.StackTrace = e.StackTrace;
-                l.Action = Data.RouteData("Action");
-                l.Controller = Data.RouteData("Controller");
-                db.Insert(l);
+            using (var scope = new TransactionScope(TransactionScopeOption.Suppress)) {
+                using (var db = new SqlConnection(_connectionString)) {
+                    var l = new Log();
+                    l.Message = e.Message;
+                    l.StackTrace = e.StackTrace;
+                    l.Action = Data.RouteData("Action");
+                    l.Controller = Data.RouteData("Controller");
+                    db.Insert(l);
+                }
             }
         }
 
         public void AddLog(string msg, string content)
         {
-            using (var db = new SqlConnection(_connectionString)) {
-                db.Open();
-                var l = new Log();
-                l.Message = msg;
-                l.StackTrace = content;
-                l.Action = Data.RouteData("Action");
-                l.Controller = Data.RouteData("Controller");
-                db.Insert(l);
+            using (var scope = new TransactionScope(TransactionScopeOption.Suppress)) {
+                using (var db = new SqlConnection(_connectionString)) {
+                    var l = new Log();
+                    l.Message = msg;
+                    l.StackTrace = content;
+                    l.Action = Data.RouteData("Action");
+                    l.Controller = Data.RouteData("Controller");
+                    db.Insert(l);
+                }
             }
         }
 
+        public List<Log> FindAllByLogDate(string logDate)
+        {
+            using (var db = new SqlConnection(_connectionString)) {
+                return db.Query<Log>($"Select * From ErrorLog  Where Convert(varchar(10),LogDate,112) = '{logDate}' ").ToList();
+            }
+        }
 
     }
 }

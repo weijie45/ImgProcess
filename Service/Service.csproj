@@ -85,6 +85,9 @@
     <Compile Include="Function\Extensions\DictionaryExtensions.cs" />
     <Compile Include="Function\Extensions\ObjectExtensions.cs" />
     <Compile Include="Function\Extensions\StringExtensions.cs" />
+    <Compile Include="Model\Photo.cs" />
+    <Compile Include="Model\PhotoDetail.cs" />
+    <Compile Include="Model\UploadLog.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -92,5 +95,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

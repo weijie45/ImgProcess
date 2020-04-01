@@ -1,4 +1,9 @@
 ﻿
+
+.hidden{
+    display:none;
+}
+
 .fade-in {
     opacity: 1;
     animation-name: fadeInOpacity;
@@ -16,6 +21,13 @@
         opacity: 1;
     }
 }
+
+.fade-out {
+    visibility:hidden;
+    opacity: 0;
+    transition: visibility 0s 1s, opacity 1s linear;
+}
+
 
 .wj-dropBlock {
     border: 4px dotted #444;

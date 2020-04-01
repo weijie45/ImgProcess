@@ -1,4 +1,4 @@
-﻿using Setting;
+﻿using Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +18,7 @@ namespace Log
         {
 
             // Setting
-            var settingContext = new Setting.SettingContextModule().Create(dbKey);
+            var settingContext = new Settings.SettingsContextModule().Create(dbKey);
 
             var connString = settingContext.GetValue(dbKey);
             if (string.IsNullOrEmpty(connString) == true) throw new InvalidOperationException("connString=null");

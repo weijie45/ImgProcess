@@ -1,29 +1,34 @@
-﻿using FilesIO;
+﻿using DapperExtensions;
+using FilesIO;
 using ImageMagick;
 using ImgProcess.Hubs;
+using ImgProcess.Infrastructure;
 using Log;
 using Newtonsoft.Json;
 using Service.Function.Base;
 using Service.Function.Extensions;
+using Service.Model;
+using Settings;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
+using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
-using System.Web.Hosting;
+using System.Transactions;
 using System.Web.Mvc;
 
 namespace ImgProcess.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         // Fields
         private LogContext _logContext = null;
+        private SettingsContext _settingsContext = null;
 
         // Constructors
         public HomeController()
@@ -48,6 +53,22 @@ namespace ImgProcess.Controllers
             }
         }
 
+        public SettingsContext SettingsContext
+        {
+            get
+            {
+                // Creat
+                if (_settingsContext == null) {
+                    // Resolve
+                    _settingsContext = new Settings.SettingsContextModule().Create("Test");
+                    if (_settingsContext == null) throw new InvalidOperationException("_settingsContext=null");
+                }
+
+                // Return
+                return _settingsContext;
+            }
+        }
+
         public ActionResult Index()
         {
             return View();
@@ -59,44 +80,24 @@ namespace ImgProcess.Controllers
             public string Thumbnail { get; set; }
             public string FileName { get; set; }
             public string FileExt { get; set; }
-            public string Width { get; set; }
-            public string Heigth { get; set; }
-            public string OrgCreatDateTime { get; set; }
-            public string OrgModifyDateTime { get; set; }
+            public int Width { get; set; }
+            public int Heigth { get; set; }
+            public DateTime OrgCreatDateTime { get; set; }
+            public DateTime OrgModifyDateTime { get; set; }
             public string Location { get; set; }
-            public string ErrMsg { get; set; }
             public string Orientation { get; set; }
         }
 
-        /// <summary>
-        /// 圖檔轉為JPG格式
-        /// </summary>
-        /// <returns></returns>
-        public ActionResult FormatPhoto()
+        private class UAParser
         {
-            var rtn = new string[2] { "", "" };
-            var files = Request.Files;
-            if (files.AllKeys.Count() == 0) {
-                rtn[0] = "查無檔案 !";
-                return this.ToJsonNet(rtn);
-            }
-
-            var file = files[0];
-            Stream fs = file.InputStream;
-
-            var fileName = Path.GetFileNameWithoutExtension(file.FileName);
-            var path = Server.MapPath($"~/Temp/{fileName}.jpg");
-            try {
-                using (MagickImage image = new MagickImage(fs)) {
-                    image.Write(path);
-                }
-                rtn[1] = "data:image/jpeg;base64," + Convert.ToBase64String(Files.ReadBinaryFile(path, true));
-            } catch (Exception e) {
-                rtn[0] = "請確認上傳檔案是否為圖片格式 !";
-                this.LogContext.LogRepoistory.SysLog(e);
-            }
-
-            return this.ToJsonNet(rtn);
+            public string BrowserName { get; set; }
+            public string BrowserVersion { get; set; }
+            public string EngineName { get; set; }
+            public string EngineVersion { get; set; }
+            public string OsName { get; set; }
+            public string OsVersion { get; set; }
+            public string DeviceType { get; set; }
+            public string DeviceVendor { get; set; }
         }
 
         [HttpPost]
@@ -109,60 +110,149 @@ namespace ImgProcess.Controllers
             string[] rtn = new string[] { "", "", "" };
 
             if (Request.HttpMethod == "POST") {
+                var uaParser = JsonConvert.DeserializeObject<UAParser>(Request["UAParser"]);
                 var files = Request.Files;
-                var t = new ThumbnailInfo();
-                for (var i = 0; i < files.AllKeys.Count(); i++) {
+                var fileLen = files.AllKeys.Count();
 
-                    var file = files[i];
-                    t.FileExt = Path.GetExtension(file.FileName);
-                    t.FileName = Path.GetFileNameWithoutExtension(file.FileName);
-
-                    Stream fs = file.InputStream;
-                    Image img = null;
-
-                    try {
-                        var path = $"~/Temp/{t.FileName}_org.jpg";
-                        var thbPath = $"~/Temp/{t.FileName}_300.jpg";
-                        using (Stream stream = new FileStream(Server.MapPath(path), FileMode.Create)) {
-                            if (t.FileExt.ToLower() == ".heic") {
-                                // heic to jpg
-                                using (MagickImage mag = new MagickImage(fs)) {
-                                    mag.Write(stream, MagickFormat.Jpg);
-                                }
-                                img = Image.FromStream(stream, true, true);
-                            } else {
-                                img = Image.FromStream(fs, true, true);
-                            }
-
-                            FormatPhoto(ref img, ref t);
-                            // Origin
-                            img.Save(stream, ImageFormat.Jpeg);
-                            // Thumbnail
-                            MakeThumbnail(stream, thbPath, 300, 100);
-
-                            t.Url = "data:image/" + t.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(Files.ReadBinaryFile(path));
-                            t.Thumbnail = "data:image/" + t.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(Files.ReadBinaryFile(thbPath));
-                        }
-
-                        Files.DelFile(path);
-                        Files.DelFile(thbPath);
-
-                        rtn[1] = JsonConvert.SerializeObject(t);
-
-                    } catch (Exception e) {
-                        this.LogContext.LogRepoistory.SysLog(e);
-                        rtn[0] += $"{t.FileName} - {e.Message} <br>";
-                        ProgressHub.SendMessage(Request["Selector"], 0, e.Message, Request["ConnId"]);
-                    } finally {
-                        if (img != null) img.Dispose();
-                        img = null;
-                    }
-
+                if (fileLen == 0) {
+                    rtn[0] = "無任何上傳檔案 !";
+                    return this.ToJsonNet(rtn);
                 }
 
+                var now = DateTime.Now;
+                var t = new ThumbnailInfo();
+                var sw = new Stopwatch();
+                var photoList = new List<int>();
+                sw.Start();
+                for (var i = 0; i < fileLen; i++) {
+                    using (var scope = new TransactionScope()) {
+                        using (var db = new SqlConnection(this.SettingsContext.GetValue("Test"))) {
+                            var file = files[i];
+                            t.FileExt = Path.GetExtension(file.FileName);
+                            t.FileName = Path.GetFileNameWithoutExtension(file.FileName);
+
+                            Stream fs = file.InputStream;
+                            Image img = null;
+                            var guid = Guid.NewGuid();
+                            var maxPix = this.SettingsContext.GetValue("MaxPixel");
+                            var path = Server.MapPath($"~/Temp/{guid}_org.jpg");
+                            var thbPath = Server.MapPath($"~/Temp/{guid}_{maxPix}.jpg");
+                            var thb1920Path = Server.MapPath($"~/Temp/{guid}_1920.jpg");
+
+                            try {
+
+                                using (Stream stream = new FileStream(path, FileMode.Create)) {
+                                    if (t.FileExt.ToLower() == ".heic") {
+                                        // heic to jpg
+                                        using (MagickImage mag = new MagickImage(fs)) {
+                                            mag.Write(stream, MagickFormat.Jpg);
+                                        }
+                                        img = Image.FromStream(stream, true, true);
+                                    } else {
+                                        img = Image.FromStream(fs, true, true);
+                                    }
+                                    
+                                    FormatPhoto(ref img, ref t);
+                                    // Origin
+                                    img.Save(stream, ImageFormat.Jpeg);
+                                    // Thumbnail                           
+                                    MakeThumbnail(stream, thbPath, maxPix.FixInt());
+                                    // Thumbnail                           
+                                    MakeThumbnail(stream, thb1920Path, 1920);
+                                }
+
+                                //t.Url = "data:image/" + t.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(Files.ReadBinaryFile(path));
+                                t.Thumbnail = "data:image/" + t.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(Files.ReadBinaryFile(thb1920Path));
+
+                                // 主檔
+                                var p = new Photo();
+                                p.CreateDateTime = now;
+                                p.FileDesc = "";
+                                p.FileExt = t.FileExt;
+                                p.FileName = t.FileName;
+                                p.OrgCreateDateTime = t.OrgCreatDateTime;
+                                p.OrgModifyDateTime = t.OrgModifyDateTime;
+                                p.ModifyDateTime = t.OrgModifyDateTime;
+                                p.Orientation = t.Orientation;
+                                p.Location = t.Location;
+                                p.Width = t.Width;
+                                p.Height = t.Heigth;
+                                p.Person = "";
+                                p.CreateDateTime = now;
+                                p.ModifyDateTime = now;
+                                db.Insert(p);
+
+                                // 原圖
+                                var pd = new PhotoDetail();
+                                pd.PhotoDetailSN = p.PhotoSN;
+                                pd.CreateDateTime = now;
+                                pd.Photo = Files.ReadBinaryFile(path);
+                                pd.Type = "Origin";
+                                db.Insert(pd);
+                                Files.RenameFile(path, path.Replace(guid.ToString(), p.PhotoSN.ToString()));
+                                path = path.Replace(guid.ToString(), p.PhotoSN.ToString());
+
+                                // 縮圖
+                                pd = new PhotoDetail();
+                                pd.PhotoDetailSN = p.PhotoSN;
+                                pd.CreateDateTime = now;
+                                pd.Photo = Files.ReadBinaryFile(thbPath);
+                                pd.Type = "Thumbnail";
+                                db.Insert(pd);
+                                Files.RenameFile(thbPath, thbPath.Replace(guid.ToString(), p.PhotoSN.ToString()));
+                                thbPath = thbPath.Replace(guid.ToString(), p.PhotoSN.ToString());
+
+                                pd = new PhotoDetail();
+                                pd.PhotoDetailSN = p.PhotoSN;
+                                pd.CreateDateTime = now;
+                                pd.Photo = Files.ReadBinaryFile(thbPath);
+                                pd.Type = "Thumbnail";
+                                db.Insert(pd);
+                                Files.RenameFile(thb1920Path, thb1920Path.Replace(guid.ToString(), p.PhotoSN.ToString()));
+                                thb1920Path = thb1920Path.Replace(guid.ToString(), p.PhotoSN.ToString());
+
+
+                                var percent = ((double)(i + 1) / (double)fileLen * 100);
+                                percent = percent > 99 ? 99 : percent;
+                                ProgressHub.SendMessage(Request["Selector"], percent, "", Request["ConnId"], i, t.Thumbnail);
+
+                                photoList.Add(p.PhotoSN);
+
+                            } catch (Exception e) {
+                                this.LogContext.LogRepoistory.SysLog(e);
+                                rtn[0] += $"{t.FileName} - {e.Message} <br>";
+                                Files.DelBulkFiles(new string[] { path, thbPath, thb1920Path });
+                                ProgressHub.SendMessage(Request["Selector"], 0, e.Message, Request["ConnId"], i, "");
+                            } finally {
+                                if (img != null) img.Dispose();
+                                img = null;
+                            }
+                        }
+                        scope.Complete();
+                    }
+                }
+
+                if (rtn[0] == "") {
+                    var log = new UploadLog();
+                    log.Browser = $"{uaParser.BrowserName}  {uaParser.BrowserVersion}";
+                    log.Device = $"{uaParser.DeviceType}  {uaParser.DeviceVendor}";
+                    log.OS = $"{uaParser.OsName}  {uaParser.OsVersion}";
+                    log.LocalIP = "";
+                    log.TotalNum = fileLen;
+                    log.Type = "Photo";
+                    log.CompletedTime = sw.Elapsed.ToString("mm\\:ss\\.ff");
+                    log.CreateDateTime = now;
+                    log.PhotoSNList = photoList.ToArray().Join(",");
+
+                    using (var db = new SqlConnection(this.SettingsContext.GetValue("Test"))) {
+                        db.Insert(log);
+                    }
+                }
+
+                ProgressHub.SendMessage(Request["Selector"], 100, "", Request["ConnId"], fileLen, "");
             }
 
-            return Json(rtn);
+            return this.ToJsonNet(rtn);
         }
 
         /// <summary>
@@ -207,9 +297,9 @@ namespace ImgProcess.Controllers
             string picDate;
             //Image image = Image.FromStream(fs, true, false);
             short orientation = 0;
-            t.ErrMsg = "";
-            t.OrgModifyDateTime = "";
-            t.OrgCreatDateTime = "";
+            var now = DateTime.Now;
+            t.OrgModifyDateTime = now;
+            t.OrgCreatDateTime = now;
             t.Location = "";
 
             var items = image.PropertyItems.Where(w => new int[] { 1, 2, 3, 4, 36867, 306, 274, 5029 }.Contains(w.Id)).Select(s => s);
@@ -225,7 +315,7 @@ namespace ImgProcess.Controllers
                     picDate = ascii.GetString(p.Value);
                     if ((!"".Equals(picDate)) && picDate.Length >= 10) {
                         picDate = Regex.Replace(picDate.Substring(0, 10), "[:,-]", "/");
-                        t.OrgModifyDateTime = picDate;
+                        t.OrgModifyDateTime = Convert.ToDateTime(picDate);
                     }
                 }
 
@@ -235,8 +325,8 @@ namespace ImgProcess.Controllers
                     picDate = ascii.GetString(p.Value);
                     if ((!"".Equals(picDate)) && picDate.Length >= 10) {
                         picDate = Regex.Replace(picDate.Substring(0, 10), "[:,-]", "/");
-                        t.OrgCreatDateTime = picDate;
-                        t.OrgModifyDateTime = picDate;
+                        t.OrgCreatDateTime = Convert.ToDateTime(picDate);
+                        t.OrgModifyDateTime = Convert.ToDateTime(picDate);
                     }
                 }
 
@@ -275,8 +365,8 @@ namespace ImgProcess.Controllers
             }
 
 
-            t.Width = image.Width.FixNull();
-            t.Heigth = image.Height.FixNull();
+            t.Width = image.Width;
+            t.Heigth = image.Height;
             t.Orientation = orientation.FixNull();
 
         }
@@ -295,31 +385,21 @@ namespace ImgProcess.Controllers
                 ImageFormat thisFormat = image.RawFormat;
                 int fixWidth = 0;
                 int fixHeight = 0;
-                //取得影像的格式
 
-                //第一種縮圖用
                 maxPx = maxPx == 0 ? 300 : maxPx;
-                //宣告一個最大值，demo是把該值寫到web.config裡
                 if (image.Width > maxPx || image.Height > maxPx)
-                //如果圖片的寬大於最大值或高大於最大值就往下執行
                 {
-                    if (image.Width >= image.Height)
-                    //圖片的寬大於圖片的高
+                    if (image.Width <= image.Height)
                     {
                         fixHeight = maxPx;
-                        //設定修改後的圖高
                         fixWidth = Convert.ToInt32((Convert.ToDouble(fixHeight) / Convert.ToDouble(image.Height)) * Convert.ToDouble(image.Width));
-                        //設定修改後的圖寬
+
                     } else {
 
                         fixWidth = maxPx;
-                        //設定修改後的圖寬
                         fixHeight = Convert.ToInt32((Convert.ToDouble(fixWidth) / Convert.ToDouble(image.Width)) * Convert.ToDouble(image.Height));
-                        //設定修改後的圖高
                     }
-                } else
-                  //圖片沒有超過設定值，不執行縮圖
-                  {
+                } else {
                     fixHeight = image.Height;
                     fixWidth = image.Width;
                 }
@@ -339,6 +419,12 @@ namespace ImgProcess.Controllers
 
         }
 
+        public ActionResult FindLog()
+        {
+            ViewBag.LogList = this.LogContext.LogRepoistory.FindAllByLogDate(DateTime.Now.ToString("yyyyMMdd"));
+
+            return View("LogView");
+        }
 
     }
 }
