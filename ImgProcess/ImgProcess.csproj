@@ -57,9 +57,8 @@
     <Reference Include="Log">
       <HintPath>RefDll\Log.dll</HintPath>
     </Reference>
-    <Reference Include="Magick.NET-Q16-AnyCPU, Version=7.15.4.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Bin\Magick.NET-Q16-AnyCPU.dll</HintPath>
+    <Reference Include="Magick.NET-Q16-AnyCPU, Version=7.15.5.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
+      <HintPath>..\packages\Magick.NET-Q16-AnyCPU.7.15.5\lib\net40\Magick.NET-Q16-AnyCPU.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.4.1\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
@@ -179,10 +178,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\master.css" />
+    <Content Include="Content\reset.css" />
+    <Content Include="Content\Slideshow.css" />
+    <Content Include="Content\TimeLine.css" />
     <Content Include="Content\venobox.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Scripts\jquery-3.4.1.intellisense.js" />
     <Content Include="Image\Double-ball.gif" />
     <Content Include="Image\EllipsisLoading.gif" />
@@ -236,6 +239,9 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\LogView.cshtml" />
     <Content Include="Views\Home\Photo.cshtml" />
+    <Content Include="Views\Home\Calander.cshtml" />
+    <Content Include="Views\Home\TimeLine.cshtml" />
+    <Content Include="Views\Home\Slideshow.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

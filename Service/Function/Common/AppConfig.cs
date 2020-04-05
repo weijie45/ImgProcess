@@ -15,6 +15,7 @@ namespace Service.Function.Common
         public AppConfig()
         {
             _settingsContext = SettingsContext;
+            ThumbnailPixel = _settingsContext.GetValue("MaxPixel");
         }
 
 

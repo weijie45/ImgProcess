@@ -140,7 +140,8 @@ namespace FilesIO
 
         private static string AbsolutePath(string path)
         {
-            return path.StartsWith("~") || path.StartsWith("/") ? HostingEnvironment.MapPath(path) : path;
+            return  !Path.IsPathRooted(path) ? HostingEnvironment.MapPath(path) : path;
+            // return path.StartsWith("~") || path.StartsWith("/") ? HostingEnvironment.MapPath(path) : path;
         }
     }
 }

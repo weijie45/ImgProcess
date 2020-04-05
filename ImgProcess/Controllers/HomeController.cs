@@ -20,6 +20,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Transactions;
+using System.Web;
 using System.Web.Mvc;
 
 namespace ImgProcess.Controllers
@@ -29,6 +30,7 @@ namespace ImgProcess.Controllers
         // Fields
         private LogContext _logContext = null;
         private SettingsContext _settingsContext = null;
+        private string Sql = "";
 
         // Constructors
         public HomeController()
@@ -84,9 +86,91 @@ namespace ImgProcess.Controllers
 
         public ActionResult Photo()
         {
+            var startDate = Request["StartDate"].FixReq();
+            var endDate = Request["EndDate"].FixReq();
+            startDate = startDate == "" ? "20200301" : startDate;
+            endDate = endDate == "" ? "20200404" : endDate;
+
             using (var db = new SqlConnection(this.SettingsContext.GetValue("Test"))) {
-                return View(db.Query<PhotoModel>("Select * From Photo"));
-            }                
+                return View(db.Query<PhotoModel>($"Select * From Photo Where OrgCreateDateTime Between '{startDate}' AND '{endDate}' Order by ModifyDateTime Desc "));
+            }
+        }
+
+        public ActionResult TimeLIne()
+        {
+            return View();
+        }
+
+        public ActionResult Calander()
+        {
+
+            Sql = " Select ";
+            Sql += "     LEFT(CONVERT(varchar, OrgCreateDateTime, 111), 7) YYYYMM, ";
+            Sql += "     PhotoSN, ";
+            Sql += "     FileName, ";
+            Sql += "     FileExt, ";
+            Sql += "     Width, ";
+            Sql += "     Height, ";
+            Sql += "     OrgCreateDateTime, ";
+            Sql += "     ROW_NUMBER() OVER(PARTITION BY LEFT(CONVERT(varchar, OrgCreateDateTime, 111), 7) ORDER BY OrgCreateDateTime DESC) ";
+            Sql += " From Photo ";
+            Sql += "  Order by YYYYMM Desc ";
+            //Sql += $" Where LEFT(CONVERT(varchar, OrgCreateDateTime,111),7) = '2018/12' ";
+
+            using (var db = new SqlConnection(this.SettingsContext.GetValue("Test"))) {
+                ViewBag.PhotoList = db.Query(Sql).ToList();
+            }
+
+            return View();
+        }
+
+        public ActionResult Slideshow()
+        {
+
+            Sql = "Select p.FileName, ";
+            Sql += "p.OrgCreateDateTime, ";
+            Sql += "d.Photo ";
+            Sql += "From Photo p ";
+            Sql += "RIGHT JOIN PhotoDetail d ON p.PhotoSN = d.PhotoDetailSN ";
+            Sql += "Where p.PhotoSN IN(1,2,3) ";
+            Sql += "AND d.Type = 'Origin' ";
+
+            using (var db = new SqlConnection(this.SettingsContext.GetValue("Test"))) {
+                var data = db.Query(Sql).ToList();
+                //var photoList = new List<string>();
+                //foreach (var d in data) {
+                //    photoList.Add("data:image/jpg;base64," + Convert.ToBase64String(d.Photo));
+                //}
+                ViewBag.PhotoList = data;
+            }
+
+            return View();
+        }
+
+        [HttpGet]
+        public void Download(string fileName, string downName)
+        {
+            //string fileName = "Test.jpg";//客戶端儲存的檔名
+            string filePath = $"C:\\inetpub\\wwwroot\\Photo\\Temp\\{fileName}";//路徑
+
+            FileInfo fileInfo = new FileInfo(filePath);
+            if (fileInfo.Exists == true) {
+                const long ChunkSize = 102400;//100K 每次讀取檔案，只讀取100K，這樣可以緩解伺服器的壓力
+                byte[] buffer = new byte[ChunkSize];
+
+                Response.Clear();
+                FileStream iStream = System.IO.File.OpenRead(filePath);
+                long dataLengthToRead = iStream.Length;//獲取下載的檔案總大小
+                Response.ContentType = "application/octet-stream";
+                Response.AddHeader("Content-Disposition", "attachment; filename=" + HttpUtility.UrlEncode(downName));
+                while (dataLengthToRead > 0 && Response.IsClientConnected) {
+                    int lengthRead = iStream.Read(buffer, 0, Convert.ToInt32(ChunkSize));//讀取的大小
+                    Response.OutputStream.Write(buffer, 0, lengthRead);
+                    Response.Flush();
+                    dataLengthToRead = dataLengthToRead - lengthRead;
+                }
+                Response.Close();
+            }
         }
 
         [HttpPost]
@@ -123,14 +207,14 @@ namespace ImgProcess.Controllers
                             Stream fs = file.InputStream;
                             Image img = null;
                             var guid = Guid.NewGuid();
-                            var maxPix = this.SettingsContext.GetValue("MaxPixel");
-                            var path = Server.MapPath($"~/Temp/{guid}_org.jpg");
+                            var maxPix = AppConfig.ThumbnailPixel;
+                            var path = Server.MapPath($"~/Temp/{guid}.jpg");
                             var thbPath = Server.MapPath($"~/Temp/{guid}_{maxPix}.jpg");
                             var thb1920Path = Server.MapPath($"~/Temp/{guid}_1920.jpg");
 
                             try {
 
-                                using (Stream stream = new FileStream(path, FileMode.Create)) {                                   
+                                using (Stream stream = new FileStream(path, FileMode.Create)) {
                                     if (t.FileExt.ToLower() == ".heic") {
                                         // heic to jpg              
                                         using (MagickImage mag = new MagickImage(fs)) {
@@ -187,7 +271,7 @@ namespace ImgProcess.Controllers
                                 db.Insert(thumbPhoto);
                                 Files.RenameFile(thbPath, thbPath.Replace(guid.ToString(), p.PhotoSN.ToString()));
                                 thbPath = thbPath.Replace(guid.ToString(), p.PhotoSN.ToString());
-                                
+
                                 // 縮圖 1920
                                 var thumbPhoto1920 = new PhotoDetailModel();
                                 thumbPhoto1920.PhotoDetailSN = p.PhotoSN;

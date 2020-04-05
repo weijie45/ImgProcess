@@ -6207,6 +6207,13 @@
             <returns>The images combined into a single image.</returns>
             <exception cref="T:ImageMagick.MagickException">Thrown when an error is raised by ImageMagick.</exception>
         </member>
+        <member name="M:ImageMagick.IMagickImageCollection.Complex(ImageMagick.ComplexSettings)">
+            <summary>
+            Perform complex mathematics on an image sequence.
+            </summary>
+            <param name="complexSettings">The complex settings.</param>
+            <exception cref="T:ImageMagick.MagickException">Thrown when an error is raised by ImageMagick.</exception>
+        </member>
         <member name="M:ImageMagick.IMagickImageCollection.Deconstruct">
             <summary>
             Break down an image sequence into constituent parts. This is useful for creating GIF or
@@ -12168,6 +12175,13 @@
             </summary>
             <param name="colorSpace">The image colorspace.</param>
             <returns>The images combined into a single image.</returns>
+            <exception cref="T:ImageMagick.MagickException">Thrown when an error is raised by ImageMagick.</exception>
+        </member>
+        <member name="M:ImageMagick.MagickImageCollection.Complex(ImageMagick.ComplexSettings)">
+            <summary>
+            Perform complex mathematics on an image sequence.
+            </summary>
+            <param name="complexSettings">The complex settings.</param>
             <exception cref="T:ImageMagick.MagickException">Thrown when an error is raised by ImageMagick.</exception>
         </member>
         <member name="M:ImageMagick.MagickImageCollection.Contains(ImageMagick.IMagickImage)">
@@ -19080,6 +19094,11 @@
             Undefined
             </summary>
         </member>
+        <member name="F:ImageMagick.AutoThresholdMethod.Kapur">
+            <summary>
+            Kapur
+            </summary>
+        </member>
         <member name="F:ImageMagick.AutoThresholdMethod.OTSU">
             <summary>
             OTSU
@@ -19483,6 +19502,51 @@
         <member name="F:ImageMagick.ColorType.PaletteBilevelAlpha">
             <summary>
             PaletteBilevelAlpha
+            </summary>
+        </member>
+        <member name="T:ImageMagick.ComplexOperator">
+            <summary>
+            Specifies a kind of complex operator.
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Undefined">
+            <summary>
+            Undefined
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Add">
+            <summary>
+            Add
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Conjugate">
+            <summary>
+            Conjugate
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Divide">
+            <summary>
+            Divide
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.MagnitudePhase">
+            <summary>
+            MagnitudePhase
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Multiply">
+            <summary>
+            Multiply
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.RealImaginary">
+            <summary>
+            RealImaginary
+            </summary>
+        </member>
+        <member name="F:ImageMagick.ComplexOperator.Subtract">
+            <summary>
+            Subtract
             </summary>
         </member>
         <member name="T:ImageMagick.CompositeOperator">
@@ -28529,6 +28593,21 @@
         <member name="P:ImageMagick.CompareSettings.MasklightColor">
             <summary>
             Gets or sets the color of pixels that are inside the read mask.
+            </summary>
+        </member>
+        <member name="T:ImageMagick.ComplexSettings">
+            <summary>
+            Class that contains setting for the complex operation.
+            </summary>
+        </member>
+        <member name="P:ImageMagick.ComplexSettings.Operator">
+            <summary>
+            Gets or sets the complex operator.
+            </summary>
+        </member>
+        <member name="P:ImageMagick.ComplexSettings.SignalToNoiseRatio">
+            <summary>
+            Gets or sets the signal to noise ratio.
             </summary>
         </member>
         <member name="T:ImageMagick.ConnectedComponentsSettings">

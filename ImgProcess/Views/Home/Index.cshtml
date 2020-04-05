@@ -80,8 +80,13 @@
     }
 </style>
 
-<p><a href="@Url.Action("FindLog","Home")">Query Log List</a></p>
-<p><a href="@Url.Action("Photo","Home")">Photo</a></p>
+<p>
+    <a href="@Url.Action("FindLog","Home")" style="margin:8px">Log</a>
+    <a href="@Url.Action("Photo","Home")" style="margin:8px">Photo</a>
+    <a href="@Url.Action("Calander","Home")" style="margin:8px">Calander</a>
+    <a href="@Url.Action("TimeLine","Home")" style="margin:8px">TimeLine</a>
+    <a href="@Url.Action("Slideshow","Home")" style="margin:8px">Slideshow</a>
+</p>
 
 <form id="upload-form">
     <div class="wj-dropBlock">
@@ -163,7 +168,7 @@
                 console.log('All Image loaded');
             }
         }
-       
+
         // 進度條
         function UpdateProgress(selector, errMsg, percent, counter, src) {
             if (parseInt(percent) >= 100) {
@@ -272,7 +277,7 @@
             img.setAttribute('id', 'img_' + fileCnt);
             img.classList.add('img-thb', 'fade-in');
             img.setAttribute('data-title', file.Name);
-            
+
             if ((_Total - _LoadingCnt > fileCnt)) {
                 // 後3張不隱藏
                 box.style.display = "none";

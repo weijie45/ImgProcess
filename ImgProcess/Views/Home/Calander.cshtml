@@ -1,0 +1,112 @@
+﻿@{
+    ViewBag.Title = "Memeory";
+}
+
+
+@{
+    var setting = new Settings.SettingsContextModule().Create("Test");
+    var photoList = (List<dynamic>)ViewBag.PhotoList;
+}
+
+<style>
+    .collapsible {
+        background-color: #777;
+        color: white;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 15px;
+        margin-bottom: 1rem;
+    }
+
+        .active, .collapsible:hover {
+            background-color: #555;
+        }
+
+    .content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        background-color: #f1f1f1;
+    }
+
+        .content.active {
+        }
+</style>
+
+<div>
+    <button>Year</button>
+    <button>Month</button>
+    <button>Day</button>
+</div>
+
+@if (photoList.Count() == 0) {
+
+} else {
+
+    var yyyyMM = photoList.Select(s => s.YYYYMM).Distinct().ToList();
+
+    foreach (var y in yyyyMM) {
+
+        <button class="collapsible">@y</button>
+        <div class="content">
+            <section>
+                @foreach (var m in photoList.Where(w => w.YYYYMM == y)) {
+                    var w = (double)m.Width;
+                    var h = (double)m.Height;                    
+                    double styleWidth = w * 200 / h;
+                    double padding = h / w * 100;
+                    var org = "data:image/" + m.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(FilesIO.Files.ReadBinaryFile($"C:\\inetpub\\wwwroot\\Photo\\Temp\\{m.PhotoSN}_1920.jpg"));
+                    var thumbnail = "data:image/" + m.FileExt.Replace(".", "") + ";base64," + Convert.ToBase64String(FilesIO.Files.ReadBinaryFile($"C:\\inetpub\\wwwroot\\Photo\\Temp\\{m.PhotoSN}_{AppConfig.ThumbnailPixel}.jpg"));
+
+                    <div class='img-box' style="width:@(styleWidth)px;flex-grow:@(styleWidth)">
+                        <i style="padding-bottom:@(padding)%"></i>
+                        <img class="lazy" id="@m.FileName" data-org-src="@org" data-src="@thumbnail" src="" data-title="@m.FileName" alt="">
+                        <div class="info">
+                            <button onClick='Download("@(m.PhotoSN+m.FileExt)","@(m.FileName+m.FileExt)")'>下載<i class='fa fa-cloud-download'></i></button>
+                            <p>@m.FileName</p>
+                            <p>@m.OrgCreateDateTime</p>
+                        </div>
+                    </div>
+                }
+            </section>
+        </div>
+    }
+}
+
+@section Scripts {
+
+    <script>
+
+        $('.lazy').Lazy();
+
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+        for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        }
+
+        function Download(fileName, downName) {
+            event.preventDefault();
+            event.stopPropagation();
+            var tag = document.createElement('a');
+            tag.setAttribute("href", "/Home/Download?fileName=" + fileName + "&downName=" + downName );
+            tag.setAttribute('target', '_blank');
+            tag.click();
+            tag.remove();
+        }
+    </script>
+
+}

@@ -25,8 +25,11 @@ namespace ImgProcess
             bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
                         "~/Scripts/modernizr-*"));
 
-            bundles.Add(new StyleBundle("~/Content/css").Include(                      
+            bundles.Add(new StyleBundle("~/Content/css").Include(
+                      "~/Content/reset.css",
                       "~/Content/master.css",
+                      "~/Content/TimeLine.css",
+                      "~/Content/Slideshow.css",
                       "~/Content/venobox.css"));
         }
     }
