@@ -1,0 +1,55 @@
+﻿@{
+    var targetId = Model.TargetID;
+    var func = Model.Func;
+    var currPage = Model.CurrPage;
+    var totalCnt = Model.TotalCnt;
+    var totalPage = Model.TotalPage;
+    var next = currPage == totalPage ? currPage : currPage + 1;
+    var prev = currPage == 1 ? 1 : currPage - 1;
+    var avgPage = totalPage / 2;
+    var flag = false;
+}
+
+<div id="@(targetId)-pager" class="pagination__wrapper pager">
+    <input type="hidden" id="@(targetId)-Action" value="@func" />
+    <ul class="pagination">
+        @if (totalPage >= 1) {
+            if (totalPage > 1) {
+                <li><button class="prev" title="previous page" onclick="DoAction('@func,@prev')" @(currPage == 1 ? "disabled" : "")>&#10094;</button></li>
+            }
+            <li><button title="first page - page 1" class="first @(1==currPage?"active":"")" onclick="DoAction('@func,1')" @(currPage == 1 ? "disabled" : "")>1</button></li>
+        }
+
+
+        @for (var i = 2; i < totalPage; i++) {
+
+            if (totalPage <= 5) {
+                <li><button title="page @i" class="@(i == currPage ? "active" : "")" onclick="DoAction('@func,@i')">@i</button></li>
+            } else {
+                if (i == currPage - 1 || i == currPage || i == currPage + 1) {
+                    flag = false;
+                    <li><button title="page @i" class="@(i == currPage ? "active" : "")" onclick="DoAction('@func,@i')">@i</button></li>
+                }
+
+                if (i < currPage - 1 && !flag && i != totalPage - 1) {
+                    <li><span>...</span></li>
+                    flag = true;
+                }
+
+                if (i >= currPage + 1 && !flag && i != totalPage - 1) {
+                    <li><span>...</span></li>
+                    flag = true;
+                }
+            }
+        }
+
+
+        @if (totalPage > 1) {
+            <li>
+                <button title="last page - page @totalPage" class="@(totalPage==currPage?"active":"")" onclick="DoAction('@func,@totalPage')" @(currPage == totalPage ? "disabled" : "")>@totalPage</button>
+            </li>
+            <li><button class="next" title="next page" onclick="DoAction('@func,@next')" @(currPage == totalPage ? "disabled" : "")>&#10095;</button></li>
+        }
+    </ul>
+</div>
+

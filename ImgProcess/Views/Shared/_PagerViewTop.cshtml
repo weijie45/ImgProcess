@@ -1,0 +1,24 @@
+﻿@{
+    var targetId = Model.TargetID;
+    var func = Model.Func;
+    var currPage = Model.CurrPage;
+    var totalCnt = Model.TotalCnt;
+    var totalPage = Model.TotalPage;
+    var next = currPage == totalPage ? currPage : currPage + 1;
+    var prev = currPage == 1 ? 1 : currPage - 1;
+}
+<div class="wj-block-r pager">
+    <label> 每頁</label>
+    <select id="@(targetId)-PageSize" class="pagesize" onchange="DoAction('@(func),1')">
+        <option value="5" @(Model.PageSize == 5 ? "selected" : "")>5</option>
+        <option value="10" @(Model.PageSize == 10 ? "selected" : "")>10</option>
+        <option value="20" @(Model.PageSize == 20 ? "selected" : "")>20</option>
+        <option value="30" @(Model.PageSize == 30 ? "selected" : "")>30</option>
+        <option value="@totalCnt" @(Model.PageSize ==totalCnt ? "selected" : "")>全部</option>
+    </select>
+    <label> 筆</label>
+    <span class="pagedisplay">
+        共@(totalCnt)筆
+    </span>
+</div>
+

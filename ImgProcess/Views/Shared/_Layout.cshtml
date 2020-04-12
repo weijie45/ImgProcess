@@ -115,6 +115,45 @@
                 color: #fff;
                 font-weight: bolder;
             }
+
+
+
+        /* Table */
+
+        .table-responsive {
+            overflow: auto;
+        }
+
+        .table {
+            width: 100%;
+            max-width: 100%;
+            box-shadow: 4px 4px 9px 0px rgba(0, 0, 0, 0.1);
+            -moz-box-shadow: 4px 4px 9px 0px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+            .table thead tr, .table thead tr th,
+            .table tbody tr, .table tbody tr td {
+                padding: 0.5em;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+
+        .table-striped tbody tr:nth-child(2n+1) {
+            background-color: #fff6fa;
+        }
+
+
+        .table-hover tbody tr:hover {
+            background-color: #f53163; /* #d90472; */
+            color: white;
+        }
+
+        .table-border td, .table-border th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
     </style>
 </head>
 <body>
@@ -152,9 +191,9 @@
 
     <script>
         // 大圖
-        $(document).on('click', '.info', function () {    
+        $(document).on('click', '.info', function () {
             $('.PreviewImgModal').addClass('show');
-          
+
             var $newimg = document.createElement('img');
             $newimg.style.opacity = "0";
             $newimg.onload = function () {
@@ -177,6 +216,7 @@
             $('.PreviewImgModal .loaded').removeClass('fade-out').show();
         });
 
+      
     </script>
 
 </body>

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Service.Function.Extensions
 {
-    static class DictionaryExtensions
+    public static class DictionaryExtensions
     {
 
         /// <summary>
@@ -16,7 +16,7 @@ namespace Service.Function.Extensions
         /// <param name="key"></param>
         /// <param name="defVal"></param>
         /// <returns></returns>
-        public static string TryGetValue(this Dictionary<string, string> dict, string key, string defVal = "")
+        public static string GetValue(this Dictionary<string, string> dict, string key, string defVal = "")
         {
             if (dict == null) { return ""; }
             dict.TryGetValue(key, out string value);
@@ -30,7 +30,7 @@ namespace Service.Function.Extensions
         /// <param name="key"></param>
         /// <param name="defVal"></param>
         /// <returns></returns>
-        public static string TryGetValue(this Dictionary<string, object> dict, string key, string defVal = "")
+        public static string GetValue(this Dictionary<string, object> dict, string key, string defVal = "")
         {
             if (dict == null) { return ""; }
             dict.TryGetValue(key, out object value);

@@ -12,6 +12,16 @@ namespace Log
 
         void AddLog(string msg, string content);
 
-        List<Log> FindAllByLogDate(string startDate, string endDate);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="startDate"></param>
+        /// <param name="endDate"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        List<Log> FindAllByLogDate(string startDate, string endDate, int startIndex, int pageSize);
+
+        int CountAll(string startDate, string endDate);
     }
 }

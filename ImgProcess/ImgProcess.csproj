@@ -58,7 +58,7 @@
       <HintPath>RefDll\Log.dll</HintPath>
     </Reference>
     <Reference Include="Magick.NET-Q16-AnyCPU, Version=7.15.5.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
-      <HintPath>..\packages\Magick.NET-Q16-AnyCPU.7.15.5\lib\net40\Magick.NET-Q16-AnyCPU.dll</HintPath>
+      <HintPath>RefDll\Magick.NET-Q16-AnyCPU.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.AspNet.SignalR.Core, Version=2.4.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.SignalR.Core.2.4.1\lib\net45\Microsoft.AspNet.SignalR.Core.dll</HintPath>
@@ -167,6 +167,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\ErrorLogController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -178,6 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\master.css" />
+    <Content Include="Content\pagination.css" />
     <Content Include="Content\reset.css" />
     <Content Include="Content\Slideshow.css" />
     <Content Include="Content\TimeLine.css" />
@@ -191,6 +193,7 @@
     <Content Include="Image\EllipsisLoading.gif" />
     <Content Include="Image\Loading.gif" />
     <Content Include="Image\RollingLoading.gif" />
+    <Content Include="Scripts\aes.min.js" />
     <Content Include="Scripts\exif.js" />
     <Content Include="Scripts\input-upload.js" />
     <Content Include="Scripts\jquery-3.4.1.js" />
@@ -198,6 +201,7 @@
     <Content Include="Scripts\jquery-3.4.1.slim.js" />
     <Content Include="Scripts\jquery-3.4.1.slim.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
+    <Content Include="Scripts\jquery-ui-1.12.1.js" />
     <Content Include="Scripts\jquery.lazy.js" />
     <Content Include="Scripts\jquery.lazy.min.js" />
     <Content Include="Scripts\jquery.signalR-2.4.1.js" />
@@ -237,11 +241,14 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
-    <Content Include="Views\Home\LogView.cshtml" />
+    <Content Include="Views\ErrorLog\LogView.cshtml" />
     <Content Include="Views\Home\Photo.cshtml" />
     <Content Include="Views\Home\Calander.cshtml" />
     <Content Include="Views\Home\TimeLine.cshtml" />
     <Content Include="Views\Home\Slideshow.cshtml" />
+    <Content Include="Views\ErrorLog\Index.cshtml" />
+    <Content Include="Views\Shared\_PagerViewBottom.cshtml" />
+    <Content Include="Views\Shared\_PagerViewTop.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

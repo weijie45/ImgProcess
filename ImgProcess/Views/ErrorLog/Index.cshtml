@@ -1,0 +1,538 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+
+    <div style="margin-bottom:1rem;">
+        <input type="checkbox" name="Chk" />A
+        <input type="checkbox" name="Chk" />B
+        <input type="checkbox" name="Chk" />C
+    </div>
+
+    <div style="margin-bottom:1rem;">
+        <input type="text" name="Txt" />
+    </div>
+
+    <div style="margin-bottom:1rem;">
+        <input type="radio" name="Radio" />A
+        <input type="radio" name="Radio" />B
+        <input type="radio" name="Radio" />C
+    </div>
+
+    <div style="margin-bottom:1rem;">
+        <select name="Sel">
+            <option value="A">A</option>
+            <option value="B">B</option>
+        </select>
+
+    </div>
+
+    <div style="margin-bottom:1rem;">
+        <select name="SelMulti" multiple>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="B">C</option>
+        </select>
+    </div>
+
+
+<div id="data-list"></div>
+
+<button type="button" onclick="DoAction('Query,1')">Log</button>
+
+@section Scripts {
+
+    <script>
+        //資料格式化設定
+        String.prototype.format = function () {
+            var s = arguments[0];
+            for (var i = 0; i < arguments.length - 1; i++) {
+                var reg = new RegExp("\\{" + i + "\\}", "gm");
+                s = s.replace(reg, arguments[i + 1]);
+            }
+
+            return s;
+        };
+
+
+        Array.prototype.max = function () {
+            return Math.max.apply(null, this);
+        };
+
+        Array.prototype.min = function () {
+            return Math.min.apply(null, this);
+        };
+
+        // 移除特定值
+        Array.prototype.remove = function () {
+            var what, a = arguments, L = a.length, ax;
+            while (L && this.length) {
+                what = a[--L];
+                while ((ax = this.indexOf(what)) !== -1) {
+                    this.splice(ax, 1);
+                }
+            }
+            return this;
+        };
+
+        // 陣列內是否包含指定的值
+        Array.prototype.contains = function (aValue) {
+            if (aValue.constructor === Array) {
+                for (var i = 0; i < aValue.length; i++) {
+                    if ($.inArray(aValue[i], this) == -1) {
+                        return false;
+                    }
+                }
+            } else {
+                if ($.inArray(aValue, this) == -1) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        // Distinct
+        Array.prototype.distinct = function () {
+            var arr = [];
+            for (var i = 0; i < this.length; i++) {
+                if (!arr.contains(this[i])) {
+                    arr.push(this[i]);
+                }
+            }
+            return arr;
+        }
+
+        //資料格式化設定
+        String.prototype.format = function () {
+            var txt = this.toString();
+            var args = arguments;
+            if (typeof args == "undefined") {
+                return txt;
+            }
+            if (args.length == 1 && typeof (args[0]) != "undefined" && args[0].constructor === Array) {
+                args = args[0];
+            }
+            for (var i = 0; i < args.length; i++) {
+                var exp = getStringFormatPlaceHolderRegEx(i);
+                txt = txt.replace(exp, (typeof (args[i]) == "undefined" || args[i] == null) ? "" : args[i]);
+            }
+            return txt;
+        };
+        //格式化設定；正則表示式
+        function getStringFormatPlaceHolderRegEx(placeHolderIndex) {
+            return new RegExp("({)?\\{" + placeHolderIndex + "\\}(?!})", "gm");
+        }
+
+
+        // 向左補值
+        String.prototype.padLeft = function (l, c) {
+            return Array(l - this.length + 1).join(c || " ") + this;
+        }
+
+        // 向右補植
+        String.prototype.padRight = function (l, c) {
+            return this + Array(l - this.length + 1).join(c || " ");
+        }
+
+
+        // 移除字串空白
+        // 回傳: string
+        String.prototype.trim = function (v) {
+            if (this == undefined) {
+                return "";
+            }
+            if (v != undefined && v != "") {
+                var re = new RegExp("^(" + v + ")+|(" + v + ")+$", "ig");
+            } else {
+                var re = /^\s+|\s+$/g;
+            }
+            return this.replace(re, "");
+        };
+
+        // 移除字串左邊空白
+        // 回傳: string
+        String.prototype.ltrim = function (v) {
+            if (this == undefined) {
+                return "";
+            }
+            if (v != undefined && v != "") {
+                var re = new RegExp("^(" + v + ")+", "ig");
+            } else {
+                var re = /^\s+/;
+            }
+            return this.replace(re, "");
+        };
+
+        // 移除字串右邊空白
+        // 回傳: string
+        String.prototype.rtrim = function (v) {
+            if (this == undefined) {
+                return "";
+            }
+            if (v != undefined && v != "") {
+                var re = new RegExp("(" + v + ")+$", "ig");
+            } else {
+                var re = /\s+$/;
+            }
+            return this.replace(re, "");
+        }
+
+
+        // 判斷字串開頭是否為指定的字
+        // 回傳: bool
+        String.prototype.startWith = function (v) {
+            return (this.length > 0 && this.length >= v.length) && this.substr(0, v.length).toLowerCase() === v.toLowerCase();
+        };
+
+        // 判斷字串結尾是否為指定的字
+        // 回傳: bool
+        String.prototype.endWith = function (v) {
+            return (this.length > 0 && this.length >= v.length) && this.substr(this.length - v.length).toLowerCase() === v.toLowerCase();
+        };
+
+        // 判斷字串是否有包含指定的字
+        // 回傳: bool
+        String.prototype.contain = function (v) {
+            return this.indexOf(v) >= 0;
+        };
+
+        // 從字串左邊開始取值，並回傳
+        // 回傳:string
+        String.prototype.left = function (i) {
+            return this.substr(0, i);
+        };
+
+        // 從字串右邊開始取值，並回傳
+        // 回傳:string
+        String.prototype.right = function (i) {
+            return this.substr(this.length - i, i);
+        };
+
+        // 從字串第s個開始取值，共取i個字元
+        // 回傳:string
+        String.prototype.mid = function (s, i) {
+            return this.substr(s - 1, i);
+        }
+
+        String.prototype.replaceAt = function (index, replacement) {
+            return this.substr(0, index) + replacement + this.substr(index + replacement.length);
+        }
+
+
+        // 陣列轉成JSON格式
+        Array.prototype.parseJSON = function () {
+            var engine = typeof JSON == "undefined" ? 2 : 1;
+            for (var i = 0; i < this.length; i++) {
+                if (typeof this[i] == "string" && this[i].length > 1) {
+                    if (this[i].length == 2 && this[i] == "{}") {
+                        this[i] = {};
+                    } else {
+                        if (this[i].left(2) == "{\"" && this[i].right(1) == "}") {
+                            try {
+                                this[i] = engine == 1 ? JSON.parse(this[i]) : $.parseJSON(this[i]);
+                            } catch (e) { };
+                        }
+                    }
+                }
+            }
+        };
+
+        // 初始分頁
+        function InitPage(func, pageSize, pageId) {
+            pageId = pageId.startsWith('#') ? pageId.replace('#', '') : pageId;
+            var $pageSize = $('#{0}-PageSize'.format(pageId));
+            var $currPage = $('#{0}-pager .active'.format(pageId)).text();
+
+            if (typeof (func) == 'undefined') { return null; }
+            if (typeof (pageSize) == 'undefined') { pageSize = 5; }
+            pageSize = $pageSize.length > 0 ? $pageSize.val() : pageSize;
+
+            var rtn = null;
+            var funcs = func.split(',');
+
+            if (funcs.length == 2) {
+                rtn = {
+                    PageSize: pageSize,
+                    Func: funcs[0],
+                    CurrPage: funcs[1].toLowerCase() == "n" ? $currPage : funcs[1]
+                }
+            }
+
+            return rtn;
+        }
+
+        // Over write Jquery Function
+        (function (b) {
+            b.fn.HorScroll = function () {
+
+                function scrollHorizontally(obj, e) {
+                    e = window.event || e;
+                    var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+                    document.getElementById(obj.id).scrollLeft -= (delta * 40); // Multiplied by 40
+                    e.preventDefault();
+                }
+
+
+                $(this).bind('DOMMouseScroll mousewheel', function (e) {
+                    scrollHorizontally(this, e);
+                });
+            }
+
+
+            b.fn.tags = function () { //頁面/版面上的各種欄位值
+                var args = $.extend.apply({}, arguments);
+                return $.extend(Tags(this), args);
+            };
+
+        })(jQuery);
+
+        function AES(val) {
+            if (typeof val != "string") {
+                val = $.toJSON(val);
+            }
+            var sEnc = "";
+            try {
+                var key = CryptoJS.enc.Utf8.parse("HeHeHaHaWeiWei00");
+                var iv = CryptoJS.enc.Utf8.parse("HeHeHaHaWeiWei00");
+                sEnc = CryptoJS.AES.encrypt(CryptoJS.enc.Utf8.parse(val), key, {
+                    keySize: 16,
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+            } catch (e) {
+                sEnc = "";
+            }
+            return sEnc;
+        }
+
+        var Sys = (function (Sys) {
+            var res = "";
+            // JSON 格式
+            Sys.Ajax = function (url, tags, model, fn) {
+                var params = {};
+                var isAsync = true;
+                var isAppend = false;
+                if (url.indexOf("/") != -1) {
+                    var root = typeof sysBaseUrl != "undefined" ? sysBaseUrl : "";
+                    url = root + url;
+                } else {
+                    var root = typeof sysControllerUrl != "undefined" ? sysControllerUrl : "";
+                    url = root + "/" + url;
+                }
+
+                switch (arguments.length) {
+                    case 1:
+                        tags = {};
+                        break;
+                    case 2:
+                        if (typeof tags == "function") {
+                            fn = tags;
+                            tags = {};
+                        }
+                        break;
+                    case 3:
+                        fn = model;
+                        break;
+                    case 4:
+                        params._models = JSON.stringify(model);
+                        break;
+                }
+                if (typeof tags.Async != "undefined") {
+                    isAsync = tags.Async == "true";
+                }
+                if (typeof fn != "function") {
+                    fn = function () { };
+                }
+                if (typeof tags == "string") {
+                    tags = {
+                        "SN": tags
+                    }
+                }
+                isAppend = tags.Append;
+                params._tags = encodeURIComponent(AES(JSON.stringify(tags)));
+
+                $.ajax({
+                    type: 'Post',
+                    url: url,
+                    data: JSON.stringify(params),
+                    async: isAsync, //啟用同步請求
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',//dataType,
+                    beforeSend: function () {
+                        //$.wait();
+                    },
+                    success: function (data) {
+                        if (typeof data.Errors != "undefined") {
+                            layer.alert(data.Errors[0], { icon: 7 });
+                        } else {
+                            if (Array.isArray(data)) {
+                                if (data[0] != "") {
+                                    layer.alert(data[0], { icon: 7 });
+                                } else {
+                                    var a = decodeURIComponent(data[1]);
+                                    var b = a.split('\n');
+                                    for (var i = 0; i < b.length; i++) {
+                                        if (b[i].startsWith('=')) {
+                                            eval(b[i].substring(1, b[i].length));
+                                        }
+                                    }
+                                    fn(data);
+                                }
+                            } else {
+                                fn(data);
+                            }
+                        }
+                    },
+                    error: function (ex) {
+                        console.log(ex);
+                        layer.alert(url + ' Ajax Error !', { icon: 7 });
+                    },
+                    complete: function (e) {
+
+                    }
+                });
+            };
+
+            // 檔案上傳
+            Sys.File = function (url, fd, fn) {
+                var progressType = fd.get("ProgressType");
+                var _Selector = fd.get("Selector");
+                _Selector = typeof ("_Selector") == 'undefined' || IsEmpty(_Selector) ? "#ProgressBarBlock #bar" : _Selector;
+                var _Ajax = $.ajax({ // JQuery Ajax
+                    type: 'POST',
+                    url: url,
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function () {
+
+                    },
+                    success: function (data) {
+                        if (typeof data.Errors != "undefined") {
+                            layer.alert(data.Errors[0], { icon: 7 });
+                        } else {
+                            if (Array.isArray(data)) {
+                                if (data[0] != "") {
+                                    layer.alert(data[0], { icon: 7 });
+                                } else {
+                                    fn(data);
+                                }
+                            } else {
+                                fn(data);
+                            }
+                        }
+                    }, error: function (response) {
+                        if (response.status == 200) {
+                            location.reload();
+                        } else {
+                            if (response.statusText != 'abort') {
+                                layer.alert(decodeURIComponent(response.statusText), { icon: 7 });
+                            }
+                        }
+                    },
+                    xhr: function () {
+                        var xhr = $.ajaxSettings.xhr();
+                        xhr.upload.onprogress = function (e) {
+                            if (IsEmpty(progressType)) {
+                                var pourc = (e.loaded / e.total * 100);
+                                if (pourc < 100) {
+                                    pourc = pourc <= 0 ? pourc += 3 : pourc;
+                                    UpdateProgress(_Selector, "", pourc);
+                                }
+                            } else {
+                                var pourc = (e.loaded / e.total * 100) / 2;
+                                if (pourc < 50) {
+                                    pourc = pourc <= 0 ? pourc += 3 : pourc;
+                                    UpdateProgress(_Selector, "", pourc);
+                                }
+                            }
+                        };
+                        return xhr;
+                    },
+                    complete: function (e) {
+
+                    }
+                });
+
+                // 中止AJAX
+                var abortId = fd.get("AbortSelector");
+                if (!IsEmpty(abortId)) {
+                    $(abortId).on('click', function () {
+                        if (_Ajax && _Ajax.readyState != 4) {
+                            _Ajax.abort();
+                            $(this).hide();
+                        }
+                    });
+                }
+            };
+
+            return Sys;
+        })(Sys || {});
+
+        // 將form轉成json
+        function Tags($form) {
+            var formData = $form.serializeArray();
+            var json = {};
+
+            //有多種name的部分
+            $.map(formData, function (n, i) {
+                var key = n['name'].trim();
+                var val = n['value'].trim();
+                var isMulti = $('[name=' + key + ']').attr('multi') == "";
+                if (key in json) {
+                    if (typeof json[key] == "object") {
+                        json[key].push(val);
+                    } else {
+                        json[key] += "," + val;
+                    }
+                } else {
+                    if (isMulti) {
+                        var arr = [];
+                        arr.push(val);
+                        json[key] = arr;
+                    } else {
+                        json[key] = val;
+                    }
+                }
+            });
+            return json;
+        }
+
+
+        //Sys.Ajax('/ErrorLog/InitPage', $('#form').tags(), function (rtn) {
+        //    layer.alert(rtn[1], { icon: 1 });
+        //});
+
+        function DoAction(val) {
+
+            var func = val.split(',')[0];
+
+            switch (func) {
+                case "Query":
+                    var tags = $('#form').tags();
+                    tags.Func = "FindLog";
+                    tags.TargetId = "#data-list";
+                    tags.TagId = "TestUI";
+
+                    // 分頁
+                    var page = InitPage(val, 5, tags.TagId);
+                    if (page == null) { return false; }
+
+                    tags = $.extend(tags, page);
+
+                    Sys.Ajax('/ErrorLog/FindLog', tags, function () {
+                        $(".table-responsive").HorScroll();
+                    });
+                    break;
+            }
+
+        }
+
+        DoAction('Query,1');
+    </script>
+
+}
+

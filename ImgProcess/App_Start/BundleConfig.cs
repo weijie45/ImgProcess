@@ -10,12 +10,14 @@ namespace ImgProcess
         {
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
                         "~/Scripts/jquery-{version}.js",
+                        "~/Scripts/jquery-ui-1.12.1.js",
+                        "~/Scripts/jquery.lazy.min.js",
+                        "~/Scripts/aes.min.js",
                         "~/Scripts/exif.js",
                         "~/Scripts/wheelzoom.js",
                         "~/Scripts/venobox.js",
                         "~/Scripts/ua-parser.js",
-                        "~/Scripts/screenfull.min.js",
-                        "~/Scripts/jquery.lazy.min.js"));
+                        "~/Scripts/screenfull.min.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
@@ -29,8 +31,9 @@ namespace ImgProcess
                       "~/Content/reset.css",
                       "~/Content/master.css",
                       "~/Content/TimeLine.css",
-                      "~/Content/Slideshow.css",
-                      "~/Content/venobox.css"));
+                      "~/Content/Slideshow.css",                     
+                      "~/Content/venobox.css",
+                      "~/Content/pagination.css"));
         }
     }
 }

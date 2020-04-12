@@ -77,13 +77,6 @@ namespace ImgProcess.Controllers
             return View();
         }
 
-        public ActionResult FindLog()
-        {
-            ViewBag.LogList = this.LogContext.LogRepoistory.FindAllByLogDate(DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("yyyyMMdd"));
-
-            return View("LogView");
-        }
-
         public ActionResult Photo()
         {
             var startDate = Request["StartDate"].FixReq();
