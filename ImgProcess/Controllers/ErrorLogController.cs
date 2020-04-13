@@ -45,18 +45,18 @@ namespace ImgProcess.Controllers
 
             string[] rtn = new string[2] { "", "Failed" };
             var tags = tagsInfo.Tags;
+            var fmDate = tags.GetValue("FmDate");
+            var toDate = tags.GetValue("ToDate");
 
-            var now = DateTime.Now;
             var pageSize = tags.GetValue("PageSize").ToInt(); // 每頁筆數       
             var currPage = tags.GetValue("CurrPage").ToInt(); // 目前頁數     
             var startIndex = ((currPage - 1) * pageSize);
 
-            var data = this.LogContext.LogRepoistory.FindAllByLogDate(now.AddDays(-30).ToString("yyyyMMdd"), now.ToString("yyyyMMdd"),
-                startIndex, pageSize);
+            var data = this.LogContext.LogRepoistory.FindAllByLogDate(fmDate, toDate, startIndex, pageSize);
 
             // Paginatio
             var pager = new Pager();
-            pager.GetPager(tags, this.LogContext.LogRepoistory.CountAll(now.AddDays(-30).ToString("yyyyMMdd"), now.ToString("yyyyMMdd")));
+            pager.GetPager(tags, this.LogContext.LogRepoistory.CountAll(fmDate, toDate));
 
             page.View(tags.GetValue("TargetId"), "LogView", model: new { TagId = tags.GetValue("TagId"), Pager = pager, Data = data });
 

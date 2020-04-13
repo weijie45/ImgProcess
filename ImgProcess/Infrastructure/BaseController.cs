@@ -85,7 +85,7 @@ namespace ImgProcess.Infrastructure
             var ex = filterContext.Exception;
 
             if (Debugger.IsAttached) {
-                Debugger.Break();
+                //Debugger.Break();
             }
             if (ex is HttpAntiForgeryException) {
                 var errorMsg = new ContentResult();

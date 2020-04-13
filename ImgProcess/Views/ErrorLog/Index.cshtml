@@ -4,7 +4,9 @@
 }
 
 
-
+<form id="query-form">
+    <input type="text" name="FmDate" value="20190101" />
+    <input type="text" name="ToDate" value="20201212" />
     <div style="margin-bottom:1rem;">
         <input type="checkbox" name="Chk" />A
         <input type="checkbox" name="Chk" />B
@@ -36,7 +38,7 @@
             <option value="B">C</option>
         </select>
     </div>
-
+</form>
 
 <div id="data-list"></div>
 
@@ -372,7 +374,7 @@
                                 if (data[0] != "") {
                                     layer.alert(data[0], { icon: 7 });
                                 } else {
-                                    var a = decodeURIComponent(data[1]);
+                                    var a = unescape(data[1]);
                                     var b = a.split('\n');
                                     for (var i = 0; i < b.length; i++) {
                                         if (b[i].startsWith('=')) {
@@ -512,7 +514,7 @@
 
             switch (func) {
                 case "Query":
-                    var tags = $('#form').tags();
+                    var tags = $('#query-form').tags();
                     tags.Func = "FindLog";
                     tags.TargetId = "#data-list";
                     tags.TagId = "TestUI";

@@ -8,6 +8,7 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
@@ -22,7 +23,7 @@ namespace Service.Function.Common
 
         public string Build()
         {
-            return Uri.EscapeDataString(Sb.ToString());
+            return escape(Sb.ToString());
         }
 
         /// <summary>
@@ -206,8 +207,11 @@ namespace Service.Function.Common
             if (model.IsAnonymousType()) {
                 model = model.ToModel();
             }
-            
-            Run($"$('{selector}').html( decodeURIComponent('{Uri.EscapeDataString(ViewRenderer.RenderPartialView($"~/Views/{RouteData("controller")}/{viewName}", model))}')).show() ");
+
+            var value = ViewRenderer.RenderPartialView($"~/Views/{RouteData("controller")}/{viewName}", model);
+
+            Run($"$('{selector}').html( unescape('{escape(Regex.Replace((value + "").TrimEnd(), @"(\s*\n){3,}", "\n\n").TrimEnd('\n'))}')).show() ");
+            //Run($"$('{selector}').html( decodeURIComponent('{Uri.EscapeDataString(ViewRenderer.RenderPartialView($"~/Views/{RouteData("controller")}/{viewName}", model))}')).show() ");
         }
 
         /// <summary>
@@ -269,6 +273,105 @@ namespace Service.Function.Common
         public string SharedView(string viewName)
         {
             return $"~/Views/Shared/{viewName}";
+        }
+
+        /// <summary>
+        /// 同 Javascript 的 escape() 編碼
+        /// </summary>
+        /// <param name="string">原始字串</param>
+        /// <returns></returns>
+        public static string escape(object @string)
+        {
+            string str = Convert.ToString(@string);
+            int length = str.Length;
+            var sb = new StringBuilder(length * 2);
+            string str2 = "0123456789ABCDEF";
+            int num3 = -1;
+            while (++num3 < length) {
+                char ch = str[num3];
+                int num2 = ch;
+                if ((((0x41 > num2) || (num2 > 90)) && ((0x61 > num2) || (num2 > 0x7a))) && ((0x30 > num2) || (num2 > 0x39))) {
+                    switch (ch) {
+                        case '@':
+                        case '*':
+                        case '_':
+                        case '+':
+                        case '-':
+                        case '.':
+                        case '/':
+                            goto Label_0125;
+                    }
+                    sb.Append('%');
+                    if (num2 < 0x100) {
+                        sb.Append(str2[num2 / 0x10]);
+                        ch = str2[num2 % 0x10];
+                    } else {
+                        sb.Append('u');
+                        sb.Append(str2[(num2 >> 12) % 0x10]);
+                        sb.Append(str2[(num2 >> 8) % 0x10]);
+                        sb.Append(str2[(num2 >> 4) % 0x10]);
+                        ch = str2[num2 % 0x10];
+                    }
+                }
+            Label_0125:
+                sb.Append(ch);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 同 Javascript 的 unescape() 解碼
+        /// </summary>
+        /// <param name="string">原始字串</param>
+        /// <returns></returns>
+        public static string unescape(object @string)
+        {
+            string str = Convert.ToString(@string);
+            int length = str.Length;
+            StringBuilder builder = new StringBuilder(length);
+            int num6 = -1;
+            while (++num6 < length) {
+                char ch = str[num6];
+                if (ch == '%') {
+                    int num2;
+                    int num3;
+                    int num4;
+                    int num5;
+                    if (((((num6 + 5) < length) && (str[num6 + 1] == 'u')) && (((num2 = HexDigit(str[num6 + 2])) != -1) && ((num3 = HexDigit(str[num6 + 3])) != -1))) && (((num4 = HexDigit(str[num6 + 4])) != -1) && ((num5 = HexDigit(str[num6 + 5])) != -1))) {
+                        ch = (char)((((num2 << 12) + (num3 << 8)) + (num4 << 4)) + num5);
+                        num6 += 5;
+                    } else if ((((num6 + 2) < length) && ((num2 = HexDigit(str[num6 + 1])) != -1)) && ((num3 = HexDigit(str[num6 + 2])) != -1)) {
+                        ch = (char)((num2 << 4) + num3);
+                        num6 += 2;
+                    }
+                }
+                builder.Append(ch);
+            }
+            return builder.ToString();
+        }
+
+        private static byte HexValue(char ch1, char ch2)
+        {
+            int num = 0;
+            int num1 = HexDigit(ch1);
+            if ((num1 < 0) || ((num = HexDigit(ch2)) < 0)) {
+                throw new Exception();
+            }
+            return (byte)((num1 << 4) | num);
+        }
+
+        internal static int HexDigit(char c)
+        {
+            if ((c >= '0') && (c <= '9')) {
+                return (c - '0');
+            }
+            if ((c >= 'A') && (c <= 'F')) {
+                return (('\n' + c) - 0x41);
+            }
+            if ((c >= 'a') && (c <= 'f')) {
+                return (('\n' + c) - 0x61);
+            }
+            return -1;
         }
 
     }
