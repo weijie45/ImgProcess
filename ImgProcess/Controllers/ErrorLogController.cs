@@ -40,8 +40,8 @@ namespace ImgProcess.Controllers
         [HttpPost]
         public ActionResult FindLog(TagsInfo tagsInfo)
         {
-            var page = new Page();
-            if (tagsInfo.Error) { return page.TagsError(tagsInfo.ErrorMsg); };
+            var p = new Page();
+            if (tagsInfo.Error) { return p.TagsError(tagsInfo.ErrorMsg); };
 
             string[] rtn = new string[2] { "", "Failed" };
             var tags = tagsInfo.Tags;
@@ -56,11 +56,18 @@ namespace ImgProcess.Controllers
 
             // Paginatio
             var pager = new Pager();
-            pager.GetPager(tags, this.LogContext.LogRepoistory.CountAll(fmDate, toDate));
+            //pager.GetPager(tags, this.LogContext.LogRepoistory.CountAll(fmDate, toDate));
 
-            page.View(tags.GetValue("TargetId"), "LogView", model: new { TagId = tags.GetValue("TagId"), Pager = pager, Data = data });
+            //p.View(tags.GetValue("TargetId"), "LogView", model: new { TagId = tags.GetValue("TagId"), Pager = pager, Data = data });
 
-            rtn[1] = page.Build();
+            p.Input("#result1", "t", "123");
+            p.Input("#result2", "h", "456");
+            p.Input("#result3", "r", "789");
+            p.Input("#result4", "d", "000");
+            p.Input(".result5", "", "555");
+            p.Area("#form1");
+
+            rtn[1] = p.Build();
 
 
             //p.Area(tags.TryGetValue("AreaId"));

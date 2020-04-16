@@ -43,6 +43,15 @@
 <div id="data-list"></div>
 
 <button type="button" onclick="DoAction('Query,1')">Log</button>
+<input type="text" class="result5" value="5" />
+
+<form id="form1">
+    <input type="text" id="result1" />
+    <input type="text" id="result2" />
+    <input type="text" id="result3" />
+    <input type="text" id="result4" />
+    <input type="text" class="result5" />
+</form>
 
 @section Scripts {
 
@@ -83,6 +92,7 @@
         Array.prototype.contains = function (aValue) {
             if (aValue.constructor === Array) {
                 for (var i = 0; i < aValue.length; i++) {
+                    console.log(aValue[i], this);
                     if ($.inArray(aValue[i], this) == -1) {
                         return false;
                     }
@@ -94,6 +104,7 @@
             }
             return true;
         };
+
 
         // Distinct
         Array.prototype.distinct = function () {
@@ -376,10 +387,74 @@
                                 } else {
                                     var a = unescape(data[1]);
                                     var b = a.split('\n');
+                                    var areaId = '';
+
+                                    if (b.contains("AreaId") > -1) {
+                                        $.each(b, function (index) {
+                                            if (b[index].startsWith('AreaId')) {
+                                                areaId = b[index].split('=')[1];
+                                            }
+                                        });
+                                    }
+
                                     for (var i = 0; i < b.length; i++) {
-                                        if (b[i].startsWith('=')) {
-                                            eval(b[i].substring(1, b[i].length));
+                                        var syntax = b[i];
+                                        if (syntax.indexOf('=') > -1) {
+                                            var type = syntax.split('=')[0];
+                                            var action = syntax.split('=')[1].split('|');
+                                            if (action.length == 3) {
+                                                var selector = action[0].trim();
+                                                var val = action[1];
+                                                var status = action[2].trim();
+                                                switch (type) {
+                                                    case "Input":
+                                                        switch (status) {
+                                                            case "t":
+                                                                $(selector, areaId).after('<span>' + val + '</span>').remove();
+                                                                break;
+                                                            case "d":
+                                                                $(selector, areaId).prop('disabled', true).val(val);
+                                                                break;
+                                                            case "r":
+                                                                $(selector, areaId).prop('readonly', true).val(val);
+                                                                break;
+                                                            case "h":
+                                                                $(selector, areaId).attr('type', 'hidden').val(val);
+                                                                break;
+                                                            default:
+                                                                $(selector, areaId).val(val);
+                                                                break;
+                                                        }
+                                                        break;
+                                                    case "Radio":
+                                                        $(selector, areaId).prop('disabled', (status == "d")).prop('checked', false);
+                                                        $('selector[value=' + val + ']', areaId).prop('checked', true);
+                                                        break;
+                                                    case "CheckBox":
+                                                        var valList = val.split(',');
+                                                        var newSel = "";
+                                                        $.each(valList, function () {
+                                                            newSel += selector + "[value=" + valList[i] + "],";
+                                                        });
+                                                        newSel = newSel == "" ? selector : newSel.slice(0, -1);
+
+                                                        $(selector, areaId).prop('disabled', (status == "d")).prop('checked', false);
+                                                        $(newSel, areaId).prop('checked', true);
+                                                        break;
+                                                    case "Toggle":
+                                                        console.log(val);
+                                                        $(selector).toggle(val);
+                                                        break;
+                                                    case "Select":
+                                                        $(selector).html(val);
+                                                        break;
+                                                }
+                                            }
                                         }
+
+                                        //if (b[i].startsWith('=')) {
+                                        //    eval(b[i].substring(1, b[i].length));
+                                        //}
                                     }
                                     fn(data);
                                 }

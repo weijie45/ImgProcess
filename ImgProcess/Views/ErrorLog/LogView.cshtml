@@ -3,7 +3,9 @@
     ViewBag.Title = "LogView";
 }
 
-@Html.Raw(Model.Pager.GoPage("_PagerViewTop"))
+
+
+@*@Html.Raw(Model.Pager.RenderPage("_PagerViewTop"))
 
 <div id="@(Model.TagId)-responsive" class="table-responsive">
     <table id="@(Model.TagId)-table" class="table data-table table-center table-striped table-hover">
@@ -31,4 +33,4 @@
 
 </div>
 
-@Html.Raw(Model.Pager.GoPage("_PagerViewBottom"))
+@Html.Raw(Model.Pager.RenderPage("_PagerViewBottom"))*@

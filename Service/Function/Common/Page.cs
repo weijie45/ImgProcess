@@ -32,10 +32,7 @@ namespace Service.Function.Common
         /// <param name="selector"></param>
         public void Area(string selector)
         {
-            if (selector != "") {
-                selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
-                AreaID = selector;
-            }
+            if (selector != "") Sb.AppendLine($"AreaId={selector}");
         }
 
         /// <summary>
@@ -46,18 +43,19 @@ namespace Service.Function.Common
         /// <param name="val"></param>
         public void Radio(string selector, string status, string val)
         {
-            if (selector != "") {
-                selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
+            if (selector != "") Sb.AppendLine($"Radio={selector}|{val}|{status}");
+            //if (selector != "") {
+            //    selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
 
-                switch (status) {
-                    case "d": // Disabled
-                        Run($"$('{selector}', '{AreaID}').prop('disabled',true).prop('checked', false); $('{selector}[value={val}]', '{AreaID}').prop('checked', true )");
-                        break;
-                    default:
-                        Run($"$('{selector}', '{AreaID}').prop('disabled',false).prop('checked', false); $('{selector}[value={val}]', '{AreaID}').prop('checked', true )");
-                        break;
-                }
-            }
+            //    switch (status) {
+            //        case "d": // Disabled
+            //            Run($"$('{selector}', '{AreaID}').prop('disabled',true).prop('checked', false); $('{selector}[value={val}]', '{AreaID}').prop('checked', true )");
+            //            break;
+            //        default:
+            //            Run($"$('{selector}', '{AreaID}').prop('disabled',false).prop('checked', false); $('{selector}[value={val}]', '{AreaID}').prop('checked', true )");
+            //            break;
+            //    }
+            //}
         }
 
         /// <summary>
@@ -68,26 +66,28 @@ namespace Service.Function.Common
         /// <param name="val">多選以逗號分隔</param>
         public void CheckBox(string selector, string status, string val)
         {
-            if (selector != "") {
-                selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
-                var tmp = selector;
-                var valList = val.Split(',');
-                if (val != "") {
-                    selector = "";
-                    for (var i = 0; i < valList.Length; i++) {
-                        selector += $"{tmp}[value={valList[i]}],";
-                    }
-                    selector = selector.Substring(0, selector.Length - 1);
-                }
-                switch (status) {
-                    case "d": // Disabled
-                        Run($"$('{tmp}', '{AreaID}').prop('disabled',true).prop('checked', false); $('{selector}', '{AreaID}').prop('checked', true )");
-                        break;
-                    default:
-                        Run($"$('{tmp}', '{AreaID}').prop('disabled',false).prop('checked', false); $('{selector}', '{AreaID}').prop('checked', true )");
-                        break;
-                }
-            }
+            if (selector != "") Sb.AppendLine($"Radio={selector}|{val}|{status}");
+            //if (selector != "") {
+            //    selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
+            //    var tmp = selector;
+            //    var valList = val.Split(',');
+            //    if (val != "") {
+            //        selector = "";
+            //        for (var i = 0; i < valList.Length; i++) {
+            //            selector += $"{tmp}[value={valList[i]}],";
+            //        }
+            //        selector = selector.Substring(0, selector.Length - 1);
+            //    }
+
+            //    switch (status) {
+            //        case "d": // Disabled
+            //            Run($"$('{tmp}', '{AreaID}').prop('disabled',true).prop('checked', false); $('{selector}', '{AreaID}').prop('checked', true )");
+            //            break;
+            //        default:
+            //            Run($"$('{tmp}', '{AreaID}').prop('disabled',false).prop('checked', false); $('{selector}', '{AreaID}').prop('checked', true )");
+            //            break;
+            //    }
+            //}
         }
 
         /// <summary>
@@ -98,26 +98,7 @@ namespace Service.Function.Common
         /// <param name="val"></param>
         public void Input(string selector, string status, string val)
         {
-            if (selector != "") {
-                selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
-                switch (status) {
-                    case "r": // ReadOnly
-                        Run($"$('{selector}', '{AreaID}').prop('readonly',true).val('{val}')");
-                        break;
-                    case "d": // Disabled
-                        Run($"$('{selector}', '{AreaID}').prop('disabled',true).val('{val}')");
-                        break;
-                    case "t": // Text
-                        Run($"$('{selector}', '{AreaID}').after('<span>{val}</span>').remove()");
-                        break;
-                    case "h": // Hidden
-                        Run($"$('{selector}', '{AreaID}').attr('type','hidden').val('{val}')");
-                        break;
-                    default:
-                        Run($"$('{selector}', '{AreaID}').prop('readonly',false).prop('disabled',false).val('{val}')");
-                        break;
-                }
-            }
+            if (selector != "") Sb.AppendLine($"Input={selector}|{val}|{status}");
         }
 
         /// <summary>
@@ -127,10 +108,12 @@ namespace Service.Function.Common
         /// <param name="isShow"></param>
         public void Toggle(string selector, bool isShow = true)
         {
-            if (selector != "") {
-                selector = new string[] { "[", "#" }.Contains(selector) ? selector : $"[name={selector}]";
-                Run($"$('{selector}', '{AreaID}').{(isShow ? "show()" : "hide()")}");
-            }
+            if (selector != "") Sb.AppendLine($"Toggle={selector}|{isShow}|");
+
+            //if (selector != "") {
+            //    selector = new string[] { "[", "#" }.Contains(selector) ? selector : $"[name={selector}]";
+            //    Run($"$('{selector}', '{AreaID}').{(isShow ? "show()" : "hide()")}");
+            //}
         }
 
         /// <summary>
@@ -142,22 +125,21 @@ namespace Service.Function.Common
         /// <param name="initVal"></param>
         /// <param name="defVal"></param>
         /// <param name="dbKey"></param>
-        public void Select(string selector, Dictionary<string, string> dt, string initText = "", string initVal = "", string defVal = "", string dbKey = "")
+        public void Select(string selector, Dictionary<string, string> dt, string initText = "", string initVal = "", string defVal = "", string status = "")
         {
-            if (selector != "") {
-                selector = (selector.IndexOf("#") > -1 || selector.IndexOf("[") > -1) ? selector : $"[name={selector}]";
-                var options = "";
-                var drp = new Dictionary<string, string>();
-                drp.Add(initVal, initText);
+            var options = "";
+            var drp = new Dictionary<string, string>();
+            drp.Add(initVal, initText);
+            drp = drp.Concat(dt).ToDictionary(d => d.Key, d => d.Value);
 
-                drp = drp.Concat(dt).ToDictionary(d => d.Key, d => d.Value);
-
-                foreach (var d in drp) {
-                    options += $"<option value='{d.Key}' {(d.Key.FixNull() == defVal ? "selected" : "")}>{d.Value}</option>";
-                }
-
-                Run($"$('{selector}', '{AreaID}').html(\"{options}\")");
+            foreach (var d in drp) {
+                options += $"<option value='{d.Key}' {(d.Key.FixNull() == defVal ? "selected" : "")}>{d.Value}</option>";
             }
+
+            //Run($"$('{selector}', '{AreaID}').html(\"{options}\")");
+
+            if (selector != "") Sb.AppendLine($"Radio={selector}|{options}|{status}");
+
         }
 
         /// <summary>
